@@ -11,9 +11,9 @@ import {
 } from "../constants/httpStatus.js";
 import { responseMessages } from "../constants/responseMessages.js";
 import pkg from "jsonwebtoken";
-import Teacher from "../models/Teacher.js";
-import Slot from "../models/Slot.js";
-import Batch from "../models/Batch.js";
+import Teacher from "../models/teacher.js";
+import Slot from "../models/slot.js";
+import Batch from "../models/batch.js";
 
 const { verify, decode, sign } = pkg;
 
@@ -102,95 +102,95 @@ export const add = async (req, res) => {
     .json({ message: "Slot added successfully", data: savedSlot });
 };
 
-export const update = async (req, res) => {
-  const { id } = req.params;
-  const selectedSlot = await Slot.findById(id);
-  const oldTeacherId = selectedSlot.TeacherId;
-  const { courseName, batchNumber, time, days, teacherName, teacherId } =
-    req.body;
-  let NewId;
+// export const update = async (req, res) => {
+//   const { id } = req.params;
+//   const selectedSlot = await Slot.findById(id);
+//   const oldTeacherId = selectedSlot.TeacherId;
+//   const { courseName, batchNumber, time, days, teacherName, teacherId } =
+//     req.body;
+//   let NewId;
 
-  if (teacherId) {
-    const teacher = await Teacher.findById(teacherId || selectedSlot.TeacherId);
-    if (!teacher) {
-      return res.status(404).json({ error: "Teacher not found" });
-    } else {
-      console.log(teacher, "===>>> teacher");
-      NewId = teacherId;
-    }
+//   if (teacherId) {
+//     const teacher = await Teacher.findById(teacherId || selectedSlot.TeacherId);
+//     if (!teacher) {
+//       return res.status(404).json({ error: "Teacher not found" });
+//     } else {
+//       console.log(teacher, "===>>> teacher");
+//       NewId = teacherId;
+//     }
 
-    const teacherSlots = teacher.Slots || [];
-    console.log(teacherSlots, "===>>> teacherSlots");
+//     const teacherSlots = teacher.Slots || [];
+//     console.log(teacherSlots, "===>>> teacherSlots");
 
-    for (const id of teacherSlots) {
-      const teacherSlot = await Slot.findById(id);
-      if (
-        teacherSlot &&
-        teacherSlot.Time === time &&
-        teacherSlot.Days.toString() === days.toString()
-      ) {
-        const existingBatch = await Batch.findOne({
-          CourseName: teacherSlot.CourseName,
-          BatchNumber: teacherSlot.BatchNumber,
-        });
+//     for (const id of teacherSlots) {
+//       const teacherSlot = await Slot.findById(id);
+//       if (
+//         teacherSlot &&
+//         teacherSlot.Time === time &&
+//         teacherSlot.Days.toString() === days.toString()
+//       ) {
+//         const existingBatch = await Batch.findOne({
+//           CourseName: teacherSlot.CourseName,
+//           BatchNumber: teacherSlot.BatchNumber,
+//         });
 
-        if (existingBatch && existingBatch.Expiry > new Date()) {
-          return res.status(409).json({
-            error:
-              "Teacher already has a slot at this time and days with an unexpired batch",
-          });
-        }
-      }
-    }
+//         if (existingBatch && existingBatch.Expiry > new Date()) {
+//           return res.status(409).json({
+//             error:
+//               "Teacher already has a slot at this time and days with an unexpired batch",
+//           });
+//         }
+//       }
+//     }
 
-    if (batchNumber || courseName) {
-      const batch = await Batch.findOne({
-        CourseName: courseName || selectedSlot.CourseName,
-        BatchNumber: batchNumber || selectedSlot.BatchNumber,
-      });
-      if (!batch) {
-        return res.status(403).json({ error: "Batch not Found!" });
-      } else {
-        console.log(batch, "===>>> batch");
-      }
-    }
+//     if (batchNumber || courseName) {
+//       const batch = await Batch.findOne({
+//         CourseName: courseName || selectedSlot.CourseName,
+//         BatchNumber: batchNumber || selectedSlot.BatchNumber,
+//       });
+//       if (!batch) {
+//         return res.status(403).json({ error: "Batch not Found!" });
+//       } else {
+//         console.log(batch, "===>>> batch");
+//       }
+//     }
 
-    const updatedSlot = await Slot.findByIdAndUpdate(
-      id,
-      {
-        CourseName: courseName || selectedSlot.CourseName,
-        BatchNumber: batchNumber || selectedSlot.BatchNumber,
-        Time: time || selectedSlot.Time,
-        Days: days || selectedSlot.Days,
-        TeacherId: NewId || oldTeacherId,
-        TeacherName: teacherName || selectedSlot.TeacherName,
-      },
-      { new: true }
-    );
+//     const updatedSlot = await Slot.findByIdAndUpdate(
+//       id,
+//       {
+//         CourseName: courseName || selectedSlot.CourseName,
+//         BatchNumber: batchNumber || selectedSlot.BatchNumber,
+//         Time: time || selectedSlot.Time,
+//         Days: days || selectedSlot.Days,
+//         TeacherId: NewId || oldTeacherId,
+//         TeacherName: teacherName || selectedSlot.TeacherName,
+//       },
+//       { new: true }
+//     );
 
-    if (!updatedSlot) {
-      return res.status(404).json({ error: "Slot not found" });
-    }
+//     if (!updatedSlot) {
+//       return res.status(404).json({ error: "Slot not found" });
+//     }
 
-    if (oldTeacherId !== teacherId) {
-      await Teacher.findByIdAndUpdate(
-        oldTeacherId,
-        { $pull: { Slots: id } },
-        { new: true }
-      );
+//     if (oldTeacherId !== teacherId) {
+//       await Teacher.findByIdAndUpdate(
+//         oldTeacherId,
+//         { $pull: { Slots: id } },
+//         { new: true }
+//       );
 
-      await Teacher.findByIdAndUpdate(
-        teacherId,
-        { $push: { Slots: id } },
-        { new: true }
-      );
-    }
+//       await Teacher.findByIdAndUpdate(
+//         teacherId,
+//         { $push: { Slots: id } },
+//         { new: true }
+//       );
+//     }
 
-    return res
-      .status(200)
-      .json({ message: "Slot updated successfully", data: updatedSlot });
-  }
-};
+//     return res
+//       .status(200)
+//       .json({ message: "Slot updated successfully", data: updatedSlot });
+//   }
+// };
 
 export const deleteSlot = async (req, res) => {
   try {

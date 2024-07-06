@@ -1,5 +1,5 @@
 import express from "express";
-import { add, deleteTeacher, getTeachers, update } from "../controller/teacherController.js";
+import { add, deleteTeacher, getTeacher, getTeachers, update } from "../controller/teacherController.js";
 
 export const teacherRoutes = express.Router();
 
@@ -22,4 +22,9 @@ teacherRoutes.delete("/delete/:id", deleteTeacher);
 // delete http://localhost:9000/api/teacher/delete/:id
 // Public
 teacherRoutes.get("/", getTeachers);
+
+// get single teacher
+// delete http://localhost:9000/api/teacher/:id
+// Public
+teacherRoutes.get("/:id", getTeacher);
 

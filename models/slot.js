@@ -26,6 +26,12 @@ const slotSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    StudentsId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Student",
+      },
+    ],
   },
   {
     timestamps: true,

@@ -159,3 +159,31 @@ export const getBatches = async (req, res) => {
     );
   }
 };
+
+export const getBatch = async (req, res) => {
+  try {
+    const batch = await Batch.findById(req.params.id);
+    if (!batch) {
+      return res.status(NOTFOUND).send(
+        sendError({
+          status: false,
+          message: "Batch not found",
+        })
+      );
+    }
+    res.status(OK);
+    res.json({
+      status: true,
+      message: "Batch fetched successfully",
+      data: batch,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(INTERNALERROR).send(
+      sendError({
+        status: false,
+        message: error.message,
+      })
+    );
+  }
+};

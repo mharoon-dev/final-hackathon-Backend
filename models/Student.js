@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-// import validator from 'validator';
 
 const student = mongoose.Schema(
   {
@@ -27,6 +26,9 @@ const student = mongoose.Schema(
     PhoneNumber: {
       type: Number,
       required: true,
+    },
+    ProfilePicture: {
+      type: String,
     },
     CourseName: {
       type: String,

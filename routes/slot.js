@@ -1,5 +1,10 @@
 import express from "express";
-import { add, deleteSlot, getSlots, } from "../controller/slotController.js";
+import {
+  add,
+  deleteSlot,
+  getSlot,
+  getSlots,
+} from "../controller/slotController.js";
 
 export const slotRoutes = express.Router();
 
@@ -22,3 +27,8 @@ slotRoutes.delete("/delete/:id", deleteSlot);
 // delete http://localhost:9000/api/slot
 // Public
 slotRoutes.get("/", getSlots);
+
+// get single slot
+// get http://localhost:9000/api/slot/:id
+// Public
+slotRoutes.get("/:id", getSlot);

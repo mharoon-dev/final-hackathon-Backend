@@ -169,3 +169,33 @@ export const getTeachers = async (req, res) => {
     );
   }
 };
+
+export const getTeacher = async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id);
+
+    if (!teacher) {
+      return res.status(NOTFOUND).send(
+        sendError({
+          status: false,
+          message: "Teacher not found",
+        })
+      );
+    }
+
+    res.status(OK);
+    res.json({
+      status: true,
+      message: "Teacher fetched successfully",
+      data: teacher,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(INTERNALERROR).send(
+      sendError({
+        status: false,
+        message: error.message,
+      })
+    );
+  }
+};

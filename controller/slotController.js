@@ -16,7 +16,6 @@ import Slot from "../models/Slot.js";
 import Batch from "../models/Batch.js";
 
 const { verify, decode, sign } = pkg;
-
 export const add = async (req, res) => {
   const { courseName, batchNumber, time, days, teacherName, teacherId } =
     req.body;

@@ -11,9 +11,9 @@ import {
 } from "../constants/httpStatus.js";
 import { responseMessages } from "../constants/responseMessages.js";
 import pkg from "jsonwebtoken";
-import Teacher from "../models/teacher.js";
-import Slot from "../models/slot.js";
-import Batch from "../models/batch.js";
+import Teacher from "../models/Teacher.js";
+import Slot from "../models/Slot.js";
+import Batch from "../models/Batch.js";
 
 const { verify, decode, sign } = pkg;
 

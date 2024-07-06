@@ -22,7 +22,6 @@ const batchSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-
     Slots: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -35,4 +34,5 @@ const batchSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("Batch", batchSchema);
+const Batch = mongoose.models.Batch || mongoose.model("Batch", batchSchema);
+export default Batch;

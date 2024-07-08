@@ -17,6 +17,11 @@ const register = mongoose.Schema(
       minlength: 8,
       trim: true,
     },
+    Role: {
+      type: String,
+      enum: ["student", "teacher", "admin"],
+      required: true,
+    },
     otp: {
       type: String,
     },
@@ -29,7 +34,7 @@ const register = mongoose.Schema(
     },
     isAdmin: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   {
@@ -37,4 +42,4 @@ const register = mongoose.Schema(
   }
 );
 
-export default mongoose.model("Admin", register);
+export default mongoose.model("User", register);

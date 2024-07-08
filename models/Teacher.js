@@ -33,6 +33,10 @@ const teacherSchema = new mongoose.Schema(
         ref: "Slot",
       },
     ],
+    TeacherId: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

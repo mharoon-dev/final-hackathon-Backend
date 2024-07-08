@@ -14,8 +14,8 @@ const batchSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    Duration: {
-      type: String,
+    EndDate: {
+      type: Date,
       required: true,
     },
     Expiry: {

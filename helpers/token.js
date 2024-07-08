@@ -1,6 +1,5 @@
 import pkg from "jsonwebtoken";
-import Users from "../models/Admin.js";
-
+import User from "../models/Users.js"
 const { sign, verify } = pkg;
 
 export const GenerateToken = ({ data, expiresIn }) => {
@@ -34,7 +33,7 @@ export const validateToken = async (req, res, next) => {
       // Get User from Token
       console.log(result, "====>>result");
 
-      const user = await Users.findOne({ _id: result._id });
+      const user = await User.findOne({ _id: result._id });
       req.user = user;
       next();
     } catch (error) {
@@ -59,7 +58,7 @@ export const checkToken = async (req, res, next) => {
       // Verify Token
       const { result } = verify(token, process.env.JWT_SECRET_KEY);
 
-      const user = await Users.findOne({ _id: result._id });
+      const user = await User.findOne({ _id: result._id });
       req.user = user;
       next();
     } catch (error) {

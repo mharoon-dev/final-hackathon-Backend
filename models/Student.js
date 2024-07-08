@@ -42,6 +42,22 @@ const student = mongoose.Schema(
       type: String,
       required: true,
     },
+    PresentDays: {
+      type: Number,
+      default: 0,
+    },
+    AbsentDays: {
+      type: Number,
+      default: 0,
+    },
+    TotalDays: {
+      type: Number,
+      default: 0,
+    },
+    RollNumber: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

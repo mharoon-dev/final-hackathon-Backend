@@ -10,6 +10,8 @@ export const responseMessages = {
   ERROR_MESSAGES: "Internal Server Error",
   NO_USER_FOUND: `Email doesn't exists`,
   EXPIRED_BATCH: "Expired Batch",
+  NO_STUDENT: "No Student found",
+  NO_TEACHER: "No Teacher found",
   STUDENT_UPDATED: "Student Updated successfully",
   INVALID_SLOT: "Invalid Slot",
   INVALID_ID: "Invalid ID",

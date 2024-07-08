@@ -17,14 +17,22 @@ import Batch from "../models/Batch.js";
 
 const { verify, decode, sign } = pkg;
 export const add = async (req, res) => {
-  const { courseName, batchNumber, time, days, teacherName, teacherId } =
-    req.body;
+  const {
+    courseName,
+    batchNumber,
+    startTime,
+    endTime,
+    days,
+    teacherName,
+    teacherId,
+  } = req.body;
   console.log(req.body, "===>>> req.body");
 
   if (
     !courseName ||
     !batchNumber ||
-    !time ||
+    !startTime ||
+    !endTime ||
     !days ||
     !teacherId ||
     !teacherName
@@ -72,7 +80,8 @@ export const add = async (req, res) => {
     const teacherSlot = await Slot.findById(id);
     if (
       teacherSlot &&
-      teacherSlot.Time === time &&
+      teacherSlot.StartTime === startTime &&
+      teacherSlot.EndTime === endTime &&
       teacherSlot.Days.toString() === days.toString()
     ) {
       const existingBatch = await Batch.findOne({
@@ -92,7 +101,8 @@ export const add = async (req, res) => {
   const newSlot = new Slot({
     CourseName: courseName,
     BatchNumber: batchNumber,
-    Time: time,
+    StartTime: startTime,
+    EndTime: endTime,
     Days: days,
     TeacherId: teacherId,
     TeacherName: teacher.TeacherName,

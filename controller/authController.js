@@ -15,7 +15,7 @@ import { responseMessages } from "../constants/responseMessages.js";
 import { GenerateToken, ValidateToken, VerifyToken } from "../helpers/token.js";
 import pkg from "jsonwebtoken";
 import { sendEmailOTP } from "../helpers/sendOtp.js";
-import Admin from "../models/Admin.js";
+import User from "../models/Users.js";
 
 const { verify, decode, sign } = pkg;
 
@@ -23,9 +23,9 @@ export const signUp = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { role, email, password } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!email || !password || !role) {
       return res
         .status(BADREQUEST) //BADREQUEST
         .send(
@@ -34,7 +34,7 @@ export const signUp = async (req, res) => {
       // .send("Missing Fields");
     }
 
-    const user = await Admin.findOne({ Email: email });
+    const user = await User.findOne({ Email: email });
     console.log(user, "====>> already email exists");
 
     if (user) {
@@ -44,20 +44,43 @@ export const signUp = async (req, res) => {
           sendError({ status: false, message: responseMessages.EMAIL_EXISTS })
         );
     } else {
+      if (role === "student") {
+        const checkStudentExists = await Student.findOne({
+          Email: email,
+        });
+        if (!checkStudentExists) {
+          return res
+            .status(NOTFOUND)
+            .send(
+              sendError({ status: false, message: responseMessages.NO_STUDENT })
+            );
+        }
+      } else if (role === "teacher") {
+        const checkTeacherExists = await Teacher.findOne({
+          Email: email,
+        });
+        if (!checkTeacherExists) {
+          return res
+            .status(NOTFOUND)
+            .send(
+              sendError({ status: false, message: responseMessages.NO_TEACHER })
+            );
+        }
+      }
+
       const salt = genSaltSync(10);
       let doc;
 
       if (password?.length >= 7) {
-        doc = new Admin({
-          FirstName: firstName,
-          LastName: lastName,
+        doc = new User({
           Email: email,
+          Role: role,
           Password: hashSync(password, salt),
         });
         //otp
         const otp = uuidv4().slice(0, 6);
         console.log(otp, "==>> otp");
-        doc.otp = otp;
+        doc.otp = otp;  
         doc.expiresIn = Date.now() + 60000; // OTP expires in 10 minutes
         let savedUser = await doc.save();
         if (savedUser.errors) {
@@ -112,7 +135,7 @@ export const verifyEmail = async (req, res) => {
   try {
     const { otp } = req.body;
     if (otp) {
-      const user = await Admin.findOne({ otp: otp, _id: req.body.user._id });
+      const user = await User.findOne({ otp: otp, _id: req.body.user._id });
       if (user) {
         console.log(user, "===>> user");
         console.log(user.expiresIn > Date.now());
@@ -166,7 +189,7 @@ export const login = async (req, res) => {
     if (email && password) {
       // return res.send("login controller")
 
-      let user = await Admin.findOne({ Email: email });
+      let user = await User.findOne({ Email: email });
       console.log(user);
       if (user) {
         const isValid = compareSync(password, user.Password);
@@ -226,7 +249,7 @@ export const forgotPasswordEmail = async (req, res) => {
   try {
     const { email } = req.body;
     if (email) {
-      const user = await Admin.findOne({
+      const user = await User.findOne({
         Email: email,
       });
       if (user) {
@@ -318,12 +341,12 @@ export const resetPasswordEmail = async (req, res) => {
         0,
         result.length - process.env.JWT_SECRET_KEY.length
       );
-      const user = await Admin.findById(userId);
+      const user = await User.findById(userId);
       // return res.send(user)
       if (user) {
         const salt = genSaltSync(10);
         const hashedPassword = hashSync(newPassword, salt);
-        await Admin.findByIdAndUpdate(userId, {
+        await User.findByIdAndUpdate(userId, {
           $set: { Password: hashedPassword },
         });
         return res.status(OK).send(
@@ -441,7 +464,7 @@ export const googleAuth = (req, res) => {
 // export const changePassword = async (req, res) => {
 //   const userDetails = req.user;
 //   try {
-//     const user = await Admin.findOne({
+//     const user = await User.findOne({
 //       'Authentication.Email': userDetails.Authentication.Email,
 //     });
 //     const { password, confirmPassword } = req.body;
@@ -465,7 +488,7 @@ export const googleAuth = (req, res) => {
 //             })
 //           );
 //         }
-//         await Admin.findByIdAndUpdate(req.user._id, {
+//         await User.findByIdAndUpdate(req.user._id, {
 //           $set: { 'Authentication.Password': newPassword },
 //         });
 //         return res
@@ -522,7 +545,7 @@ export const googleAuth = (req, res) => {
 //   try {
 //     const { email } = req.body;
 //     if (email) {
-//       const user = await Admin.findOne({ 'Authentication.Email': email });
+//       const user = await User.findOne({ 'Authentication.Email': email });
 //       if (user) {
 //         const secret = user._id + process.env.JWT_SECRET_KEY;
 //         const token = GenerateToken({ data: secret, expiresIn: '30m' });
@@ -563,7 +586,7 @@ export const googleAuth = (req, res) => {
 //     try {
 //         const { password, confirmPassword } = req.body;
 //         const { id, token } = req.params;
-//         const user = await Admin.findById(id);
+//         const user = await User.findById(id);
 //         if (user) {
 //             const secret = user._id + process.env.JWT_SECRET_KEY;
 
@@ -576,7 +599,7 @@ export const googleAuth = (req, res) => {
 //         }
 
 //         // if (email) {
-//         //   const user = await Admin.findOne({ "Authentication.Email": email });
+//         //   const user = await User.findOne({ "Authentication.Email": email });
 //         //   if(user){
 //         //     const secret = user._id + process.env.JWT_SECRET_KEY
 //         //     const token = GenerateToken({ data: secret , expiresIn :"30m" });
@@ -637,10 +660,10 @@ export const googleAuth = (req, res) => {
 //     const { deviceId } = req.body;
 //     const id = req.user._id;
 //     if (deviceId) {
-//       let user = await Admin.findOne({ _id: id });
+//       let user = await User.findOne({ _id: id });
 //       if (user) {
 //         // update user with this deveiceId
-//         user = await Admin.findByIdAndUpdate(id, {
+//         user = await User.findByIdAndUpdate(id, {
 //           $set: { 'Authentication.DeviceId': deviceId },
 //         });
 //         res.status(OK).send(

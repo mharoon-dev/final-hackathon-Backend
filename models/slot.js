@@ -10,14 +10,28 @@ const slotSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    Time: {
-      type: String,
+    StartTime: {
+      type: Date,
       required: true,
     },
-    Days: {
-      type: Array,
+    EndTime: {
+      type: Date,
       required: true,
     },
+    Days: [
+      {
+        type: String,
+        enum: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
+      },
+    ],
     TeacherName: {
       type: String,
       required: true,

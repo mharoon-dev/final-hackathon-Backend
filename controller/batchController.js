@@ -16,10 +16,10 @@ const { verify, decode, sign } = pkg;
 export const add = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
-  const { courseName, batchNumber, startedFrom, duration, expiry } = req.body;
+  const { courseName, batchNumber, startedFrom, endDate, expiry } = req.body;
 
   try {
-    if (!courseName || !batchNumber || !startedFrom || !duration || !expiry) {
+    if (!courseName || !batchNumber || !startedFrom || !endDate || !expiry) {
       return res
         .status(BADREQUEST)
         .send(
@@ -43,7 +43,7 @@ export const add = async (req, res) => {
           CourseName: courseName && courseName,
           BatchNumber: batchNumber && batchNumber,
           StartedFrom: startedFrom && startedFrom,
-          Duration: duration && duration,
+          EndDate: endDate && endDate,
           Expiry: expiry && expiry,
         });
         const data = await newBatch.save();
@@ -51,6 +51,7 @@ export const add = async (req, res) => {
           sendSuccess({
             status: true,
             message: responseMessages.GET_SUCCESS_MESSAGES,
+            data: data,
           })
         );
       }
@@ -68,39 +69,38 @@ export const add = async (req, res) => {
 
 export const update = async (req, res) => {
   console.log(req.body, "===>>> req.body");
-
-  // Retrieve existing batch data
-  const singleBatchData = await Batch.findById(req.params.id);
-
-  const { courseName, batchNumber, startedFrom, duration, expiry } = req.body;
-
-  // Check if the combination of courseName and batchNumber already exists in another document
-  const checkBatch = await Batch.findOne({
-    CourseName: courseName || singleBatchData.CourseName,
-    BatchNumber: batchNumber || singleBatchData.BatchNumber,
-    _id: { $ne: req.params.id }, // Exclude the current document
-  });
-
-  console.log(checkBatch, "===>>> checkBatch");
-  if (checkBatch) {
-    return res.status(ALREADYEXISTS).send(
-      sendError({
-        status: false,
-        message: responseMessages.BATCH_AND_COURSE_EXISTS,
-      })
-    );
-  }
-
-  // Prepare data for update
-  const data = {
-    CourseName: courseName || singleBatchData.CourseName,
-    BatchNumber: batchNumber || singleBatchData.BatchNumber,
-    StartedFrom: new Date(startedFrom || singleBatchData.StartedFrom),
-    Duration: duration || singleBatchData.Duration,
-    Expiry: new Date(expiry || singleBatchData.Expiry),
-  };
-
   try {
+    // Retrieve existing batch data
+    const singleBatchData = await Batch.findById(req.params.id);
+
+    const { courseName, batchNumber, startedFrom, endDate, expiry } = req.body;
+
+    // Check if the combination of courseName and batchNumber already exists in another document
+    const checkBatch = await Batch.findOne({
+      CourseName: courseName || singleBatchData.CourseName,
+      BatchNumber: batchNumber || singleBatchData.BatchNumber,
+      _id: { $ne: req.params.id }, // Exclude the current document
+    });
+
+    console.log(checkBatch, "===>>> checkBatch");
+    if (checkBatch) {
+      return res.status(ALREADYEXISTS).send(
+        sendError({
+          status: false,
+          message: responseMessages.BATCH_AND_COURSE_EXISTS,
+        })
+      );
+    }
+
+    // Prepare data for update
+    const data = {
+      CourseName: courseName || singleBatchData.CourseName,
+      BatchNumber: batchNumber || singleBatchData.BatchNumber,
+      StartedFrom: new Date(startedFrom || singleBatchData.StartedFrom),
+      EndDate: endDate || singleBatchData.EndDate,
+      Expiry: new Date(expiry || singleBatchData.Expiry),
+    };
+
     // Update the batch
     const updated = await Batch.findByIdAndUpdate(req.params.id, data, {
       new: true,

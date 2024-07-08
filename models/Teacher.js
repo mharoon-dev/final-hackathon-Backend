@@ -34,7 +34,7 @@ const teacherSchema = new mongoose.Schema(
       },
     ],
     TeacherId: {
-      type: String,
+      type: Number,
       required: true,
     },
   },

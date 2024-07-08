@@ -8,6 +8,7 @@ import {
   OK,
 } from "../constants/httpStatus.js";
 import { responseMessages } from "../constants/responseMessages.js";
+import Slot from "../models/Slot.js";
 import Teacher from "../models/Teacher.js";
 import pkg from "jsonwebtoken";
 
@@ -16,10 +17,10 @@ const { verify, decode, sign } = pkg;
 export const add = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
-  const { teacherName, email, phoneNumber, teacherOf } = req.body;
+  const { teacherName, email, phoneNumber, teacherOf, teacherId } = req.body;
 
   try {
-    if (!teacherName || !email || !phoneNumber || !teacherOf) {
+    if (!teacherName || !email || !phoneNumber || !teacherOf || !teacherId) {
       return res
         .status(BADREQUEST)
         .send(
@@ -35,6 +36,7 @@ export const add = async (req, res) => {
             sendError({ status: false, message: responseMessages.EMAIL_EXISTS })
           );
       }
+
       const checkPhoneNumber = await Teacher.findOne({
         PhoneNumber: phoneNumber,
       });
@@ -46,11 +48,22 @@ export const add = async (req, res) => {
           );
       }
 
+      const checkTeacherId = await Teacher.findOne({ TeacherId: teacherId });
+      if (checkTeacherId) {
+        return res.status(ALREADYEXISTS).send(
+          sendError({
+            status: false,
+            message: responseMessages.TEACHERID_EXISTS,
+          })
+        );
+      }
+
       const obj = {
         TeacherName: teacherName,
         Email: email,
         PhoneNumber: phoneNumber,
         TeacherOf: teacherOf,
+        TeacherId: teacherId,
       };
 
       const teacher = new Teacher(obj);
@@ -79,7 +92,7 @@ export const add = async (req, res) => {
 export const update = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
-  const { teacherName, email, phoneNumber, teacherOf } = req.body;
+  const { teacherName, email, phoneNumber, teacherOf, teacherId } = req.body;
 
   try {
     const checkEmail = await Teacher.findOne({ Email: req.body.email });
@@ -90,6 +103,7 @@ export const update = async (req, res) => {
           sendError({ status: false, message: responseMessages.EMAIL_EXISTS })
         );
     }
+
     const checkPhoneNumber = await Teacher.findOne({
       PhoneNumber: req.body.phoneNumber,
     });
@@ -101,11 +115,24 @@ export const update = async (req, res) => {
         );
     }
 
+    const checkTeacherId = await Teacher.findOne({
+      TeacherId: req.body.teacherId,
+    });
+    if (checkTeacherId) {
+      return res.status(ALREADYEXISTS).send(
+        sendError({
+          status: false,
+          message: responseMessages.TEACHERID_EXISTS,
+        })
+      );
+    }
+
     const data = {
       TeacherName: teacherName && teacherName,
       Email: email && email,
       PhoneNumber: phoneNumber && phoneNumber,
       TeacherOf: teacherOf && teacherOf,
+      TeacherId: teacherId && teacherId,
     };
 
     const updated = await Teacher.findByIdAndUpdate(
@@ -133,15 +160,31 @@ export const update = async (req, res) => {
 
 export const deleteTeacher = async (req, res) => {
   try {
-    const deleted = await Teacher.findByIdAndDelete({ _id: req.params.id });
-    res.status(OK);
-    res.json({
+    const teacherId = req.params.id;
+
+    // Find and delete the teacher
+    const deletedTeacher = await Teacher.findByIdAndDelete(teacherId);
+
+    if (!deletedTeacher) {
+      return res.status(NOTFOUND).json({
+        status: false,
+        message: "Teacher not found",
+      });
+    }
+
+    // Remove teacher from slots
+    await Slot.updateMany(
+      { teacherId: teacherId },
+      { $set: { teacherId: "" } }
+    );
+
+    res.status(OK).json({
       status: true,
-      message: "Teacher deleted successfully",
+      message: "Teacher deleted successfully and removed from slots",
     });
   } catch (error) {
-    console.log(error);
-    return res.status(INTERNALERROR).send(
+    console.error(error);
+    return res.status(INTERNALERROR).json(
       sendError({
         status: false,
         message: error.message,

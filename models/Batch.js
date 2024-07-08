@@ -18,10 +18,6 @@ const batchSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    Expiry: {
-      type: Date,
-      required: true,
-    },
     Slots: [
       {
         type: mongoose.Schema.Types.ObjectId,

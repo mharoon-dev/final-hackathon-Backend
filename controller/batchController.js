@@ -16,10 +16,10 @@ const { verify, decode, sign } = pkg;
 export const add = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
-  const { courseName, batchNumber, startedFrom, endDate, expiry } = req.body;
+  const { courseName, batchNumber, startedFrom, endDate } = req.body;
 
   try {
-    if (!courseName || !batchNumber || !startedFrom || !endDate || !expiry) {
+    if (!courseName || !batchNumber || !startedFrom || !endDate) {
       return res
         .status(BADREQUEST)
         .send(
@@ -42,9 +42,8 @@ export const add = async (req, res) => {
         const newBatch = new Batch({
           CourseName: courseName && courseName,
           BatchNumber: batchNumber && batchNumber,
-          StartedFrom: startedFrom && startedFrom,
-          EndDate: endDate && endDate,
-          Expiry: expiry && expiry,
+          StartedFrom: new Date(startedFrom && startedFrom),
+          EndDate: new Date(endDate && endDate),
         });
         const data = await newBatch.save();
         return res.status(CREATED).send(
@@ -73,7 +72,7 @@ export const update = async (req, res) => {
     // Retrieve existing batch data
     const singleBatchData = await Batch.findById(req.params.id);
 
-    const { courseName, batchNumber, startedFrom, endDate, expiry } = req.body;
+    const { courseName, batchNumber, startedFrom, endDate } = req.body;
 
     // Check if the combination of courseName and batchNumber already exists in another document
     const checkBatch = await Batch.findOne({
@@ -97,8 +96,7 @@ export const update = async (req, res) => {
       CourseName: courseName || singleBatchData.CourseName,
       BatchNumber: batchNumber || singleBatchData.BatchNumber,
       StartedFrom: new Date(startedFrom || singleBatchData.StartedFrom),
-      EndDate: endDate || singleBatchData.EndDate,
-      Expiry: new Date(expiry || singleBatchData.Expiry),
+      EndDate: new Date(endDate || singleBatchData.EndDate),
     };
 
     // Update the batch

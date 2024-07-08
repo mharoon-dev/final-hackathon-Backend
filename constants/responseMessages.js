@@ -12,6 +12,7 @@ export const responseMessages = {
   EXPIRED_BATCH: "Expired Batch",
   NO_STUDENT: "No Student found",
   NO_TEACHER: "No Teacher found",
+  TEACHERID_EXISTS: "Teacher ID already exists",
   STUDENT_UPDATED: "Student Updated successfully",
   INVALID_SLOT: "Invalid Slot",
   INVALID_ID: "Invalid ID",

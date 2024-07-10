@@ -17,8 +17,6 @@ import Slot from "../models/Slot.js";
 const { verify, decode, sign } = pkg;
 
 export const add = async (req, res) => {
-  console.log(req.body, "===>>> req.body");
-
   const {
     fullName,
     email,
@@ -28,146 +26,98 @@ export const add = async (req, res) => {
     batchNumber,
     slotId,
   } = req.body;
-  console.log(req.body, "===>>> req.body");
 
   try {
-    // check for missing fields
-    if (
-      !fullName ||
-      !email ||
-      !fatherEmail ||
-      !phoneNumber ||
-      !courseName ||
-      !batchNumber ||
-      !slotId
-    ) {
-      return res
-        .status(BADREQUEST)
-        .send(
-          sendError({ status: false, message: responseMessages.MISSING_FIELDS })
-        );
-      // .send("Missing Fields");
-    } else {
-      // check for already exists
-      const checkEmail = await Student.findOne({ Email: email });
-      if (checkEmail) {
-        return res
-          .status(ALREADYEXISTS)
-          .send(
-            sendError({ status: false, message: responseMessages.EMAIL_EXISTS })
-          );
-      }
-
-      // check for already exists
-      const checkFatherEmail = await Student.findOne({
-        FatherEmail: fatherEmail,
-      });
-      if (checkFatherEmail) {
-        return res.status(ALREADYEXISTS).send(
-          sendError({
-            status: false,
-            message: responseMessages.FATHER_EMAIL_EXISTS,
-          })
-        );
-      }
-
-      // check for already exists
-      const checkPhoneNumber = await Student.findOne({
-        PhoneNumber: phoneNumber,
-      });
-      if (checkPhoneNumber) {
-        return res
-          .status(ALREADYEXISTS)
-          .send(
-            sendError({ status: false, message: responseMessages.PHONE_EXISTS })
-          );
-      }
-      // check batch is valid or not
-      const checkBatch = await Batch.findOne({
-        BatchNumber: batchNumber,
-        CourseName: courseName,
-      });
-      if (!checkBatch) {
-        return res.status(BADREQUEST).send(
-          sendError({
-            status: false,
-            message: responseMessages.INVALID_BATCH,
-          })
-        );
-      } else if (checkBatch) {
-        const checkExpiry = new Date(checkBatch.Expiry);
-        if (checkExpiry < new Date()) {
-          return res.status(BADREQUEST).send(
-            sendError({
-              status: false,
-              message: responseMessages.EXPIRED_BATCH,
-            })
-          );
-        }
-      }
-
-      // check slot is valid or not
-      const checkSlot = await Slot.findOne({ _id: slotId || data.SlotId });
-
-      if (!checkSlot) {
-        return res.status(BADREQUEST).send(
-          sendError({
-            status: false,
-            message: responseMessages.INVALID_SLOT,
-          })
-        );
-      } else if (checkSlot) {
-        const checkBatchOfSlot = checkSlot.CourseName;
-        console.log(checkBatchOfSlot, "===>>> checkBatchOfSlot");
-        if (checkBatchOfSlot !== data.CourseName) {
-          return res.status(BADREQUEST).send(
-            sendError({
-              status: false,
-              message: "this slot is not for this course",
-            })
-          );
-        }
-      }
-
-      // add
-      const obj = {
-        FullName: fullName,
-        Email: email,
-        FatherEmail: fatherEmail,
-        PhoneNumber: phoneNumber,
-        CourseName: courseName,
-        BatchNumber: batchNumber,
-        SlotId: slotId,
-      };
-      const student = new Student(obj);
-      const data = await student.save();
-
-      // update the slot student array
-      const slot = await Slot.findOne({ _id: slotId });
-      if (slot) {
-        const updated = [...slot.StudentsId, data._id];
-        await Slot.updateOne({ _id: slotId }, { StudentsId: updated });
-      }
-      res.status(OK);
-      res.json({
-        status: true,
-        message: responseMessages.STUDENT_ADDED,
-        data: data,
-      });
+    // Check for missing fields
+    if (!fullName || !email || !fatherEmail || !phoneNumber || !courseName || !batchNumber || !slotId) {
+      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.MISSING_FIELDS }));
     }
+
+    // Check if student email already exists
+    const checkEmail = await Student.findOne({ Email: email });
+    if (checkEmail) {
+      return res.status(ALREADYEXISTS).send(sendError({ status: false, message: responseMessages.EMAIL_EXISTS }));
+    }
+
+    // Check if student father's email already exists
+    const checkFatherEmail = await Student.findOne({ FatherEmail: fatherEmail });
+    if (checkFatherEmail) {
+      return res.status(ALREADYEXISTS).send(sendError({ status: false, message: responseMessages.FATHER_EMAIL_EXISTS }));
+    }
+
+    // Check if student phone number already exists
+    const checkPhoneNumber = await Student.findOne({ PhoneNumber: phoneNumber });
+    if (checkPhoneNumber) {
+      return res.status(ALREADYEXISTS).send(sendError({ status: false, message: responseMessages.PHONE_EXISTS }));
+    }
+
+    // Validate batch existence and validity
+    const checkBatch = await Batch.findOne({
+      BatchNumber: batchNumber,
+      CourseName: courseName,
+    });
+
+    if (!checkBatch) {
+      console.log("Invalid Batch", { batchNumber, courseName }); // Log for debugging
+      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.INVALID_BATCH }));
+    }
+
+    // Check if batch has expired
+    const checkExpiry = new Date(checkBatch.EndDate);
+    if (checkExpiry < new Date()) {
+      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.EXPIRED_BATCH }));
+    }
+
+    // Validate slot existence and course match
+    const checkSlot = await Slot.findOne({ _id: slotId });
+    if (!checkSlot) {
+      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.INVALID_SLOT }));
+    }
+    if (checkSlot.CourseName !== courseName) {
+      return res.status(BADREQUEST).send(sendError({ status: false, message: "This slot is not for this course" }));
+    }
+
+    // Generate roll number
+    const rollNumber = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Create new student object
+    const obj = {
+      FullName: fullName,
+      Email: email,
+      FatherEmail: fatherEmail,
+      PhoneNumber: phoneNumber,
+      CourseName: courseName,
+      BatchNumber: batchNumber,
+      SlotId: slotId,
+      RollNumber: rollNumber,
+    };
+    console.log(obj);
+    const student = new Student(obj);
+    const data = await student.save();
+
+    // Update slot's StudentsId array
+    await Slot.findByIdAndUpdate(
+      slotId,
+      { $push: { StudentsId: data._id } },
+      { new: true }
+    );
+
+    // Respond with success message
+    res.status(CREATED).json({
+      status: true,
+      message: responseMessages.STUDENT_ADDED,
+      data: data,
+    });
   } catch (error) {
+    console.error(error); // Log any unexpected errors
     return res.status(INTERNALERROR).send(
       sendError({
         status: false,
         message: error.message,
-        data: null,
       })
     );
-
-    console.log(error);
   }
 };
-
 export const update = async (req, res) => {
   const { id } = req.params;
   const {

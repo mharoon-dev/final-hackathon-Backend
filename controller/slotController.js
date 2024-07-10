@@ -11,11 +11,13 @@ import {
 } from "../constants/httpStatus.js";
 import { responseMessages } from "../constants/responseMessages.js";
 import pkg from "jsonwebtoken";
+import mongoose from 'mongoose';
 import Teacher from "../models/Teacher.js";
 import Slot from "../models/Slot.js";
 import Batch from "../models/Batch.js";
 
 const { verify, decode, sign } = pkg;
+
 export const add = async (req, res) => {
   const {
     courseName,
@@ -26,106 +28,74 @@ export const add = async (req, res) => {
     teacherName,
     teacherId,
   } = req.body;
-  console.log(req.body, "===>>> req.body");
 
-  if (
-    !courseName ||
-    !batchNumber ||
-    !startTime ||
-    !endTime ||
-    !days ||
-    !teacherId ||
-    !teacherName
-  ) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
+  console.log("Received request:", req.body);
 
-  const teacher = await Teacher.findById(teacherId);
-  if (!teacher) {
-    return res.status(404).json({ error: "Teacher not found" });
-  } else if (teacher) {
-    const checkTeacherOf = teacher.TeacherOf;
-    console.log(checkTeacherOf, "===>>> checkTeacherOf");
-    if (checkTeacherOf !== courseName) {
-      return res.status(403).json({
-        error: "This Teacher is not for this Course!",
-      });
-    }
-  } else {
-    console.log(teacher, "===>>> teacher");
-  }
-
-  const batch = await Batch.findOne({
-    CourseName: courseName,
-    BatchNumber: batchNumber,
-  });
-  if (!batch) {
-    return res.status(403).json({ error: "Batch not Found!" });
-  } else if (batch) {
-    const expiry = new Date(batch.Expiry);
-    console.log(expiry, "===>>> expiry");
-    if (expiry < new Date()) {
-      return res.status(409).json({
-        error: "Batch has already expired",
-      });
-    }
-  } else {
-    console.log(batch, "===>>> batch");
-  }
-
-  const teacherSlots = teacher.Slots || [];
-  console.log(teacherSlots, "===>>> teacherSlots");
-
-  for (const id of teacherSlots) {
-    const teacherSlot = await Slot.findById(id);
+  try {
+    // Check if all required fields are provided
     if (
-      teacherSlot &&
-      teacherSlot.StartTime === startTime &&
-      teacherSlot.EndTime === endTime &&
-      teacherSlot.Days.toString() === days.toString()
+      !courseName ||
+      !batchNumber ||
+      !startTime ||
+      !endTime ||
+      !days ||
+      !teacherId ||
+      !teacherName
     ) {
-      const existingBatch = await Batch.findOne({
-        CourseName: teacherSlot.CourseName,
-        BatchNumber: teacherSlot.BatchNumber,
-      });
-
-      if (existingBatch && existingBatch.Expiry > new Date()) {
-        return res.status(409).json({
-          error:
-            "Teacher already has a slot at this time and days with an unexpired batch",
-        });
-      }
+      return res.status(400).json({ error: "Missing required fields" });
     }
+
+    // Find the teacher by teacherId
+    const teacher = await Teacher.findOne({ TeacherId: parseInt(teacherId) });
+
+    if (!teacher) {
+      console.log(`Teacher not found for TeacherId: ${teacherId}`);
+      return res.status(404).json({ error: "Teacher not found" });
+    }
+
+    // Check if the teacher is assigned to the specified course
+    if (teacher.TeacherOf !== courseName) {
+      console.log(`Teacher ${teacher.TeacherName} is not assigned to course ${courseName}`);
+      return res.status(403).json({
+        error: "This Teacher is not assigned to this Course!",
+      });
+    }
+
+    // Proceed to create the slot
+    const newSlot = new Slot({
+      CourseName: courseName,
+      BatchNumber: batchNumber,
+      StartTime: new Date(startTime),
+      EndTime: new Date(endTime),
+      Days: days,
+      TeacherId: teacher.TeacherId,
+      TeacherName: teacher.TeacherName,
+    });
+
+    const savedSlot = await newSlot.save();
+
+    // Update the teacher's Slots array
+    await Teacher.findByIdAndUpdate(
+      teacher._id,
+      { $push: { Slots: savedSlot._id } },
+      { new: true }
+    );
+
+    // Update the batch's Slots array
+    await Batch.findOneAndUpdate(
+      { CourseName: courseName, BatchNumber: batchNumber },
+      { $push: { Slots: savedSlot._id } },
+      { new: true }
+    );
+
+    return res.status(201).json({ message: "Slot added successfully", data: savedSlot });
+  } catch (error) {
+    console.error("Error adding slot:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
-
-  const newSlot = new Slot({
-    CourseName: courseName,
-    BatchNumber: batchNumber,
-    StartTime: startTime,
-    EndTime: endTime,
-    Days: days,
-    TeacherId: teacherId,
-    TeacherName: teacher.TeacherName,
-  });
-
-  const savedSlot = await newSlot.save();
-
-  await Teacher.findByIdAndUpdate(
-    teacherId,
-    { $push: { Slots: savedSlot._id } },
-    { new: true }
-  );
-
-  await Batch.findOneAndUpdate(
-    { CourseName: courseName, BatchNumber: batchNumber },
-    { $push: { Slots: savedSlot._id } },
-    { new: true }
-  );
-
-  return res
-    .status(201)
-    .json({ message: "Slot added successfully", data: savedSlot });
 };
+
+
 
 export const deleteSlot = async (req, res) => {
   try {
@@ -219,3 +189,32 @@ export const getSlot = async (req, res) => {
     );
   }
 };
+
+
+// update slot 
+
+export const updateSlot = async (req, res) => {
+  try {
+    const slot = await Slot.findById(req.params.id);
+    if (!slot) {
+      return res.status(NOTFOUND).send(
+        sendError({
+          status: false,
+          message: "Slot not found",
+        })
+      );
+    }
+
+    const updatedSlot = await Slot.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.status(OK);
+    res.json({
+      status: true,
+      message: "Slot updated successfully", 
+      data: updatedSlot
+    });
+
+
+  } catch (error) {
+    console.log(error);
+  }
+}

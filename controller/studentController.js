@@ -79,7 +79,7 @@ export const add = async (req, res) => {
     }
 
     // Generate roll number
-    const rollNumber = Math.floor(100000 + Math.random() * 900000).toString();
+    const rollNumber = Math.floor(100000 + Math.random() * 900000);
 
     // Create new student object
     const obj = {
@@ -90,7 +90,7 @@ export const add = async (req, res) => {
       CourseName: courseName,
       BatchNumber: batchNumber,
       SlotId: slotId,
-      // RollNumber: rollNumber,
+      RollNumber: rollNumber,
     };
     console.log(obj);
     const student = new Student(obj);

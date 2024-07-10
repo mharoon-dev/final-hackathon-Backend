@@ -26,7 +26,8 @@ export const add = async (req, res) => {
     batchNumber,
     slotId,
   } = req.body;
-
+  
+ console.log(fullName, email, fatherEmail, phoneNumber, courseName, batchNumber, slotId);
   try {
     // Check for missing fields
     if (!fullName || !email || !fatherEmail || !phoneNumber || !courseName || !batchNumber || !slotId) {
@@ -52,10 +53,10 @@ export const add = async (req, res) => {
     }
 
     // Validate batch existence and validity
-    const checkBatch = await Batch.findOne({
-      BatchNumber: batchNumber,
-      CourseName: courseName,
-    });
+    const checkBatch = await Batch.findOne({})
+
+    console.log(checkBatch);
+
 
     if (!checkBatch) {
       console.log("Invalid Batch", { batchNumber, courseName }); // Log for debugging
@@ -89,7 +90,7 @@ export const add = async (req, res) => {
       CourseName: courseName,
       BatchNumber: batchNumber,
       SlotId: slotId,
-      RollNumber: rollNumber,
+      // RollNumber: rollNumber,
     };
     console.log(obj);
     const student = new Student(obj);

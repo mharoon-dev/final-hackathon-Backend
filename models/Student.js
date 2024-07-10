@@ -39,7 +39,7 @@ const student = mongoose.Schema(
       required: true,
     },
     SlotId: {
-      type: Number,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
     PresentDays: {

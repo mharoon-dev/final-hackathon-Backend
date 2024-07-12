@@ -7,6 +7,7 @@ import { teacherRoutes } from "./routes/teacher.js";
 import { batchRoutes } from "./routes/batch.js";
 import { slotRoutes } from "./routes/slot.js";
 import { studentRoutes } from "./routes/student.js";
+import { holidayRoutes } from "./routes/holiday.js";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use("/api/teacher", teacherRoutes);
 app.use("/api/batch", batchRoutes);
 app.use("/api/slot", slotRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/holiday", holidayRoutes);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is Running at http://localhost:${process.env.PORT}`);

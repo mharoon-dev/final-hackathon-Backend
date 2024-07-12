@@ -8,6 +8,7 @@ import { batchRoutes } from "./routes/batch.js";
 import { slotRoutes } from "./routes/slot.js";
 import { studentRoutes } from "./routes/student.js";
 import { holidayRoutes } from "./routes/holiday.js";
+import { courseRoutes } from "./routes/course.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ connectDB();
 app.use(express.json());
 
 // routes
+app.use("/api/course", courseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/batch", batchRoutes);

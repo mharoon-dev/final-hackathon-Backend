@@ -5,11 +5,13 @@ import {
   CREATED,
   FORBIDDEN,
   INTERNALERROR,
+  NOTFOUND,
   OK,
 } from "../constants/httpStatus.js";
 import { responseMessages } from "../constants/responseMessages.js";
 import Slot from "../models/Slot.js";
 import Teacher from "../models/Teacher.js";
+import Course from "../models/Course.js";
 import pkg from "jsonwebtoken";
 
 const { verify, decode, sign } = pkg;
@@ -58,6 +60,17 @@ export const add = async (req, res) => {
         );
       }
 
+      // check the course is exists
+      const checkCourse = await Course.findOne({ CourseName: teacherOf });
+      if (!checkCourse) {
+        return res.status(NOTFOUND).send(
+          sendError({
+            status: false,
+            message: responseMessages.COURSE_NOT_FOUND,
+          })
+        );
+      }
+
       const obj = {
         TeacherName: teacherName,
         Email: email,
@@ -67,6 +80,13 @@ export const add = async (req, res) => {
       };
 
       const teacher = new Teacher(obj);
+
+      // update the course array
+      const course = await Course.findOneAndUpdate(
+        { CourseName: teacherOf },
+        { $push: { Teachers: teacher._id } },
+        { new: true }
+      );
 
       const data = await teacher.save();
       res.status(OK);
@@ -92,9 +112,22 @@ export const add = async (req, res) => {
 export const update = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
+  const { id } = req.params;
   const { teacherName, email, phoneNumber, teacherOf, teacherId } = req.body;
 
   try {
+    // get the teacher
+    const teacher = await Teacher.findById(id);
+    if (!teacher) {
+      return res.status(NOTFOUND).send(
+        sendError({
+          status: false,
+          message: responseMessages.TEACHER_NOT_FOUND,
+        })
+      );
+    }
+
+    // check the email
     const checkEmail = await Teacher.findOne({ Email: req.body.email });
     if (checkEmail) {
       return res
@@ -127,6 +160,17 @@ export const update = async (req, res) => {
       );
     }
 
+    // check the course is exists
+    const checkCourse = await Course.findOne({ CourseName: teacherOf });
+    if (!checkCourse) {
+      return res.status(NOTFOUND).send(
+        sendError({
+          status: false,
+          message: responseMessages.COURSE_NOT_FOUND,
+        })
+      );
+    }
+
     const data = {
       TeacherName: teacherName && teacherName,
       Email: email && email,
@@ -140,6 +184,19 @@ export const update = async (req, res) => {
       data,
       { new: true }
     );
+
+    if (teacherOf) {
+      const updateCourse = await Course.updateMany(
+        { CourseName: teacherOf },
+        { $push: { Teachers: req.params.id } }
+      );
+
+      const oldCourse = await Course.updateMany(
+        { CourseName: teacher.TeacherOf },
+        { $pull: { Teachers: req.params.id } }
+      );
+    }
+
     res.status(OK);
     res.json({
       status: true,
@@ -176,6 +233,12 @@ export const deleteTeacher = async (req, res) => {
     await Slot.updateMany(
       { teacherId: teacherId },
       { $set: { teacherId: "" } }
+    );
+
+    // update the course array
+    await Course.updateMany(
+      { CourseName: deletedTeacher.TeacherOf },
+      { $pull: { Teachers: deletedTeacher._id } }
     );
 
     res.status(OK).json({

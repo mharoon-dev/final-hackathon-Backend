@@ -8,7 +8,7 @@ import {
   OK,
 } from "../constants/httpStatus.js";
 import { responseMessages } from "../constants/responseMessages.js";
-import Teacher from "../models/Teacher.js";
+import Course from "../models/Course.js";
 import pkg from "jsonwebtoken";
 import Student from "../models/Student.js";
 import Batch from "../models/Batch.js";
@@ -69,6 +69,16 @@ export const add = async (req, res) => {
           message: responseMessages.FATHER_EMAIL_EXISTS,
         })
       );
+    }
+
+    // check course is exsists
+    const checkCourse = await Course.findOne({ CourseName: courseName });
+    if (!checkCourse) {
+      return res
+        .status(BADREQUEST)
+        .send(
+          sendError({ status: false, message: responseMessages.INVALID_COURSE })
+        );
     }
 
     // Check if student phone number already exists
@@ -252,6 +262,21 @@ export const update = async (req, res) => {
         );
       } else {
         checkId.PhoneNumber = phoneNumber;
+      }
+    }
+
+    //check if course is exsists
+    if (courseName) {
+      const checkCourse = await Course.findOne({ CourseName: courseName });
+      if (!checkCourse) {
+        return res.status(BADREQUEST).send(
+          sendError({
+            status: false,
+            message: responseMessages.INVALID_COURSE,
+          })
+        );
+      } else {
+        checkId.CourseName = courseName;
       }
     }
 

@@ -13,6 +13,12 @@ const courseSchema = new Schema({
       ref: "Batch",
     },
   ],
+  Teachers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Teacher",
+    },
+  ],
 });
 
 export default mongoose.model("Course", courseSchema);

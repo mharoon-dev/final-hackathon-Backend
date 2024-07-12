@@ -4,12 +4,14 @@ import {
   BADREQUEST,
   CREATED,
   INTERNALERROR,
+  NOTFOUND,
   OK,
 } from "../constants/httpStatus.js";
 
 import { responseMessages } from "../constants/responseMessages.js";
 import pkg from "jsonwebtoken";
 import Batch from "../models/Batch.js";
+import Course from "../models/Course.js";
 
 const { verify, decode, sign } = pkg;
 
@@ -27,6 +29,17 @@ export const add = async (req, res) => {
         );
       // .send("Missing Fields");
     } else {
+      // check the course is exists
+      const checkCourse = await Course.findOne({ CourseName: courseName });
+      if (!checkCourse) {
+        return res.status(NOTFOUND).send(
+          sendError({
+            status: false,
+            message: responseMessages.COURSE_NOT_FOUND,
+          })
+        );
+      }
+
       const checkBatch = await Batch.findOne({
         BatchNumber: req.body.batchNumber,
         CourseName: req.body.courseName,
@@ -39,6 +52,7 @@ export const add = async (req, res) => {
           })
         );
       } else {
+        // create an object
         const newBatch = new Batch({
           CourseName: courseName && courseName,
           BatchNumber: batchNumber && batchNumber,
@@ -46,6 +60,13 @@ export const add = async (req, res) => {
           EndDate: new Date(endDate && endDate),
         });
         const data = await newBatch.save();
+
+        // update the course with the new batch
+        const course = await Course.findOneAndUpdate(
+          { CourseName: courseName },
+          { $push: { Batches: data._id } },
+          { new: true }
+        );
         return res.status(CREATED).send(
           sendSuccess({
             status: true,
@@ -91,6 +112,19 @@ export const update = async (req, res) => {
       );
     }
 
+    // Check if the courseName exists
+    if (courseName) {
+      const checkCourse = await Course.findOne({ CourseName: courseName });
+      if (!checkCourse) {
+        return res.status(NOTFOUND).send(
+          sendError({
+            status: false,
+            message: responseMessages.COURSE_NOT_FOUND,
+          })
+        );
+      }
+    }
+
     // Prepare data for update
     const data = {
       CourseName: courseName || singleBatchData.CourseName,
@@ -103,6 +137,21 @@ export const update = async (req, res) => {
     const updated = await Batch.findByIdAndUpdate(req.params.id, data, {
       new: true,
     });
+
+    // change the course array with the new batch
+    if (courseName) {
+      const course = await Course.findOneAndUpdate(
+        { CourseName: courseName },
+        { $push: { Batches: updated._id } },
+        { new: true }
+      );
+
+      const oldCourse = await Course.findOneAndUpdate(
+        { CourseName: singleBatchData.CourseName },
+        { $pull: { Batches: singleBatchData._id } },
+        { new: true }
+      );
+    }
     res.status(OK).json({
       status: true,
       message: "Batch updated successfully",
@@ -122,6 +171,15 @@ export const update = async (req, res) => {
 export const deleteBatch = async (req, res) => {
   try {
     const deleted = await Batch.findByIdAndDelete({ _id: req.params.id });
+
+    // update the course array
+    const course = await Course.findOneAndUpdate(
+      { CourseName: deleted.CourseName },
+      { $pull: { Batches: deleted._id } },
+      { new: true }
+    );
+
+    // send success response
     res.status(OK);
     res.json({
       status: true,

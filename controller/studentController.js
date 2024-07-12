@@ -17,6 +17,7 @@ import Slot from "../models/Slot.js";
 const { verify, decode, sign } = pkg;
 
 export const add = async (req, res) => {
+  console.log(req.body);
   const {
     fullName,
     email,
@@ -25,61 +26,118 @@ export const add = async (req, res) => {
     courseName,
     batchNumber,
     slotId,
+    rollNumber,
   } = req.body;
-  
- console.log(fullName, email, fatherEmail, phoneNumber, courseName, batchNumber, slotId);
+
   try {
     // Check for missing fields
-    if (!fullName || !email || !fatherEmail || !phoneNumber || !courseName || !batchNumber || !slotId) {
-      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.MISSING_FIELDS }));
+    if (
+      !fullName ||
+      !email ||
+      !fatherEmail ||
+      !phoneNumber ||
+      !courseName ||
+      !batchNumber ||
+      !slotId ||
+      !rollNumber
+    ) {
+      return res
+        .status(BADREQUEST)
+        .send(
+          sendError({ status: false, message: responseMessages.MISSING_FIELDS })
+        );
     }
 
     // Check if student email already exists
     const checkEmail = await Student.findOne({ Email: email });
     if (checkEmail) {
-      return res.status(ALREADYEXISTS).send(sendError({ status: false, message: responseMessages.EMAIL_EXISTS }));
+      return res
+        .status(ALREADYEXISTS)
+        .send(
+          sendError({ status: false, message: responseMessages.EMAIL_EXISTS })
+        );
     }
 
     // Check if student father's email already exists
-    const checkFatherEmail = await Student.findOne({ FatherEmail: fatherEmail });
+    const checkFatherEmail = await Student.findOne({
+      FatherEmail: fatherEmail,
+    });
     if (checkFatherEmail) {
-      return res.status(ALREADYEXISTS).send(sendError({ status: false, message: responseMessages.FATHER_EMAIL_EXISTS }));
+      return res.status(ALREADYEXISTS).send(
+        sendError({
+          status: false,
+          message: responseMessages.FATHER_EMAIL_EXISTS,
+        })
+      );
     }
 
     // Check if student phone number already exists
-    const checkPhoneNumber = await Student.findOne({ PhoneNumber: phoneNumber });
+    const checkPhoneNumber = await Student.findOne({
+      PhoneNumber: phoneNumber,
+    });
     if (checkPhoneNumber) {
-      return res.status(ALREADYEXISTS).send(sendError({ status: false, message: responseMessages.PHONE_EXISTS }));
+      return res
+        .status(ALREADYEXISTS)
+        .send(
+          sendError({ status: false, message: responseMessages.PHONE_EXISTS })
+        );
     }
 
     // Validate batch existence and validity
-    const checkBatch = await Batch.findOne({})
+    const checkBatch = await Batch.findOne({
+      CourseName: courseName,
+      BatchNumber: batchNumber,
+    });
 
     console.log(checkBatch);
 
-
     if (!checkBatch) {
       console.log("Invalid Batch", { batchNumber, courseName }); // Log for debugging
-      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.INVALID_BATCH }));
+      return res
+        .status(BADREQUEST)
+        .send(
+          sendError({ status: false, message: responseMessages.INVALID_BATCH })
+        );
     }
 
     // Check if batch has expired
     const checkExpiry = new Date(checkBatch.EndDate);
     if (checkExpiry < new Date()) {
-      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.EXPIRED_BATCH }));
+      return res
+        .status(BADREQUEST)
+        .send(
+          sendError({ status: false, message: responseMessages.EXPIRED_BATCH })
+        );
     }
 
     // Validate slot existence and course match
     const checkSlot = await Slot.findOne({ _id: slotId });
     if (!checkSlot) {
-      return res.status(BADREQUEST).send(sendError({ status: false, message: responseMessages.INVALID_SLOT }));
+      return res
+        .status(BADREQUEST)
+        .send(
+          sendError({ status: false, message: responseMessages.INVALID_SLOT })
+        );
     }
     if (checkSlot.CourseName !== courseName) {
-      return res.status(BADREQUEST).send(sendError({ status: false, message: "This slot is not for this course" }));
+      return res.status(BADREQUEST).send(
+        sendError({
+          status: false,
+          message: "This slot is not for this course",
+        })
+      );
     }
 
-    // Generate roll number
-    const rollNumber = Math.floor(100000 + Math.random() * 900000);
+    // check the rollNumber is unique
+    const checkRollNumber = await Student.findOne({ RollNumber: rollNumber });
+    if (checkRollNumber) {
+      return res.status(BADREQUEST).send(
+        sendError({
+          status: false,
+          message: responseMessages.ROLL_NUMBER_EXISTS,
+        })
+      );
+    }
 
     // Create new student object
     const obj = {
@@ -121,6 +179,7 @@ export const add = async (req, res) => {
 };
 export const update = async (req, res) => {
   const { id } = req.params;
+  console.log(req.body);
   const {
     fullName,
     email,
@@ -129,6 +188,7 @@ export const update = async (req, res) => {
     courseName,
     batchNumber,
     slotId,
+    rollNumber,
   } = req.body;
 
   try {
@@ -143,72 +203,93 @@ export const update = async (req, res) => {
     }
 
     // check if email already exists
-    const checkEmail = await Student.findOne({
-      Email: email,
-      _id: { $ne: id },
-    });
-    if (checkEmail) {
-      return res.status(ALREADYEXISTS).send(
-        sendError({
-          status: false,
-          message: responseMessages.EMAIL_EXISTS,
-        })
-      );
-    }
-
-    const checkFatherEmail = await Student.findOne({
-      FatherEmail: fatherEmail,
-      _id: { $ne: id },
-    });
-    if (checkFatherEmail) {
-      return res.status(ALREADYEXISTS).send(
-        sendError({
-          status: false,
-          message: responseMessages.FATHER_EMAIL_EXISTS,
-        })
-      );
-    }
-
-    // check if phone number already exists
-    const checkPhoneNumber = await Student.findOne({
-      PhoneNumber: phoneNumber,
-      _id: { $ne: id },
-    });
-    if (checkPhoneNumber) {
-      return res.status(ALREADYEXISTS).send(
-        sendError({
-          status: false,
-          message: responseMessages.PHONE_EXISTS,
-        })
-      );
-    }
-
-    // check if batch is valid and not expired
-    const checkBatch = await Batch.findOne({
-      BatchNumber: batchNumber || checkId.BatchNumber,
-      CourseName: courseName || checkId.CourseName,
-    });
-    if (!checkBatch) {
-      return res.status(BADREQUEST).send(
-        sendError({
-          status: false,
-          message: responseMessages.INVALID_BATCH,
-        })
-      );
-    } else {
-      const checkExpiry = new Date(checkBatch.Expiry);
-      if (checkExpiry < new Date()) {
-        return res.status(BADREQUEST).send(
+    if (email) {
+      const checkEmail = await Student.findOne({
+        Email: email,
+        _id: { $ne: id },
+      });
+      if (checkEmail) {
+        return res.status(ALREADYEXISTS).send(
           sendError({
             status: false,
-            message: responseMessages.EXPIRED_BATCH,
+            message: responseMessages.EMAIL_EXISTS,
           })
         );
+      } else {
+        checkId.Email = email;
       }
     }
 
+    if (fatherEmail) {
+      const checkFatherEmail = await Student.findOne({
+        FatherEmail: fatherEmail,
+        _id: { $ne: id },
+      });
+      if (checkFatherEmail) {
+        return res.status(ALREADYEXISTS).send(
+          sendError({
+            status: false,
+            message: responseMessages.FATHER_EMAIL_EXISTS,
+          })
+        );
+      } else {
+        checkId.FatherEmail = fatherEmail;
+      }
+    }
+
+    // check if phone number already exists
+    if (phoneNumber) {
+      const checkPhoneNumber = await Student.findOne({
+        PhoneNumber: phoneNumber,
+        _id: { $ne: id },
+      });
+      if (checkPhoneNumber) {
+        return res.status(ALREADYEXISTS).send(
+          sendError({
+            status: false,
+            message: responseMessages.PHONE_EXISTS,
+          })
+        );
+      } else {
+        checkId.PhoneNumber = phoneNumber;
+      }
+    }
+
+    // check if batch is valid and not expired
+    if (batchNumber || courseName) {
+      const checkBatch = await Batch.findOne({
+        BatchNumber: batchNumber || checkId.BatchNumber,
+        CourseName: courseName || checkId.CourseName,
+      });
+      console.log(checkBatch + "=====>>> checkBatch");
+      if (!checkBatch) {
+        return res.status(BADREQUEST).send(
+          sendError({
+            status: false,
+            message: responseMessages.INVALID_BATCH,
+          })
+        );
+      } else {
+        // check if batch is expired
+        const checkExpiry = new Date(checkBatch.Expiry);
+        if (checkExpiry < new Date()) {
+          return res.status(BADREQUEST).send(
+            sendError({
+              status: false,
+              message: responseMessages.EXPIRED_BATCH,
+            })
+          );
+        }
+
+        checkId.BatchNumber = batchNumber || checkId.BatchNumber;
+        checkId.CourseName = courseName || checkId.CourseName;
+      }
+    }
+
+    let oldSlotId = checkId.SlotId;
+    // check if slot is valid
     if (slotId) {
-      const checkSlot = await Slot.findOne({ _id: slotId || checkId.SlotId });
+      const checkSlot = await Slot.findById(slotId);
       if (!checkSlot) {
         return res.status(BADREQUEST).send(
           sendError({
@@ -216,12 +297,39 @@ export const update = async (req, res) => {
             message: responseMessages.INVALID_SLOT,
           })
         );
-      } else if (slotId && courseName) {
-        if (checkSlot.CourseName !== courseName) {
+      } else {
+        const checkCourseName = checkSlot.CourseName;
+        const checkBatchNumber = checkSlot.BatchNumber;
+        if (
+          checkId.CourseName !== checkCourseName ||
+          checkId.BatchNumber !== checkBatchNumber
+        ) {
           return res.status(BADREQUEST).send(
             sendError({
               status: false,
-              message: "This slot is not for this course",
+              message: responseMessages.INVALID_SLOT,
+            })
+          );
+        } else {
+          checkId.SlotId = slotId;
+        }
+      }
+    }
+
+    if (batchNumber || courseName) {
+      // check the slot if the slot is for this course or batch
+      const slot = await Slot.findById(checkId.SlotId);
+      if (slot) {
+        const checkCourseName = slot.CourseName;
+        const checkBatchNumber = slot.BatchNumber;
+        if (
+          checkId.CourseName !== checkCourseName ||
+          checkId.BatchNumber !== checkBatchNumber
+        ) {
+          return res.status(BADREQUEST).send(
+            sendError({
+              status: false,
+              message: responseMessages.INVALID_SLOT,
             })
           );
         }
@@ -229,19 +337,9 @@ export const update = async (req, res) => {
     }
 
     // Update the student
-    const updatedStudent = await Student.findByIdAndUpdate(
-      id,
-      {
-        FullName: fullName || checkId.FullName,
-        Email: email || checkId.Email,
-        FatherEmail: fatherEmail || checkId.FatherEmail,
-        PhoneNumber: phoneNumber || checkId.PhoneNumber,
-        CourseName: courseName || checkId.CourseName,
-        BatchNumber: batchNumber || checkId.BatchNumber,
-        SlotId: slotId || checkId.SlotId,
-      },
-      { new: true }
-    );
+    const updatedStudent = await Student.findByIdAndUpdate(id, checkId, {
+      new: true,
+    });
 
     // Update the slot's StudentsId array if slotId has changed
     if (slotId) {
@@ -251,16 +349,13 @@ export const update = async (req, res) => {
         await Slot.updateOne({ _id: slotId }, { StudentsId: updated });
 
         // Remove the student from the old slot's StudentsId array
-        const oldSlot = await Slot.findById(checkId.SlotId);
+        const oldSlot = await Slot.findById(oldSlotId);
         if (oldSlot) {
           const oldUpdated = oldSlot.StudentsId.filter(
             (studentId) =>
               studentId.toString() !== updatedStudent._id.toString()
           );
-          await Slot.updateOne(
-            { _id: checkId.SlotId },
-            { StudentsId: oldUpdated }
-          );
+          await Slot.updateOne({ _id: oldSlotId }, { StudentsId: oldUpdated });
         }
       }
     }

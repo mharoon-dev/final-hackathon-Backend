@@ -11,11 +11,11 @@ const slotSchema = new mongoose.Schema(
       required: true,
     },
     StartTime: {
-      type: Date,
+      type: String,
       required: true,
     },
     EndTime: {
-      type: Date,
+      type: String,
       required: true,
     },
     Days: [

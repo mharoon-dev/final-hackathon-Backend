@@ -1,4 +1,5 @@
 import Course from "../models/Course.js";
+import mongoose from "mongoose";
 
 //add
 export const add = async (req, res) => {
@@ -44,6 +45,14 @@ export const update = async (req, res) => {
     const { courseName } = req.body;
     const { id } = req.params;
 
+    // check the selectedCourse is available
+    const selectedCourse = await Course.findById(id);
+    if (!selectedCourse) {
+      return res
+        .status(404)
+        .send({ status: false, message: "Course not found" });
+    }
+
     // check the courseName is already exists
     const checkCourseName = await Course.findOne({
       CourseName: courseName,
@@ -60,7 +69,7 @@ export const update = async (req, res) => {
     };
 
     // update
-    const course = await Course.findByIdAndUpdate(id,data , {
+    const course = await Course.findByIdAndUpdate(id, data, {
       new: true,
     });
 
@@ -76,18 +85,20 @@ export const update = async (req, res) => {
 };
 
 // delete
+
 export const deleteCourse = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const { id } = req.params;
+    const course = await Course.findOneAndDelete({ _id: id });
     if (!course) {
       return res
         .status(404)
         .send({ status: false, message: "Course not found" });
     }
-    await Course.findByIdAndDelete(req.params.id);
     res.status(200).send({
       status: true,
       message: "Course deleted successfully",
+      data: course,
     });
   } catch (error) {
     console.log(error);

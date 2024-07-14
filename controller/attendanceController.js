@@ -95,6 +95,14 @@ export const markAttendance = async (req, res) => {
 // mark absent students
 export const markAbsentStudents = async (req, res) => {
   try {
+    checkHoliday = await Holiday.findOne({ Date: new Date() });
+    console.log(checkHoliday + "====>> checkHoliday");
+    if (checkHoliday) {
+      return res
+        .status(200)
+        .json({ status: false, message: "today is Holiday" });
+    }
+
     // Step 1: Fetch all slots that match the current day
     const currentDay = new Date().toLocaleDateString("en-US", {
       weekday: "long",
@@ -111,12 +119,10 @@ export const markAbsentStudents = async (req, res) => {
 
     if (slots.length === 0) {
       console.log("No slots found for the current day.");
-      return res
-        .status(200)
-        .json({
-          status: false,
-          message: "No slots found for the current day.",
-        });
+      return res.status(200).json({
+        status: false,
+        message: "No slots found for the current day.",
+      });
     }
 
     // Step 2: Loop through each slot to mark absent students
@@ -168,12 +174,10 @@ export const markAbsentStudents = async (req, res) => {
       .json({ status: true, message: "Absent students marked successfully" });
   } catch (error) {
     console.error("Error marking absent students:", error);
-    res
-      .status(500)
-      .json({
-        status: false,
-        message: "Error marking absent students",
-        error: error.message,
-      });
+    res.status(500).json({
+      status: false,
+      message: "Error marking absent students",
+      error: error.message,
+    });
   }
 };

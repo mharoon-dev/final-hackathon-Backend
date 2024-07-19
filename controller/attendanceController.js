@@ -75,6 +75,7 @@ export const markAttendance = async (req, res) => {
 
     // Increment PresentDays for the student
     student.PresentDays += 1;
+    student.TotalDays += 1;
     await student.save();
 
     // Save the attendance record
@@ -163,7 +164,7 @@ export const markAbsentStudents = async (req, res) => {
 
         await Student.updateOne(
           { _id: student._id },
-          { $inc: { AbsentDays: 1 } }
+          { $inc: { AbsentDays: 1 }, $inc: { TotalDays: 1 } }
         );
       }
     }

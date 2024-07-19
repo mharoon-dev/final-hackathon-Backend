@@ -404,9 +404,6 @@ export const isUserLoggedIn = async (req, res) => {
   }
 };
 
-export const googleAuth = (req, res) => {
-  res.send("googleAuth");
-};
 
 // @desc    RefreshToken
 // @route   GET api/auth/refreshToken

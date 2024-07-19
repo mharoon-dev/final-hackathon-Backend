@@ -1,17 +1,6 @@
 import { sendError, sendSuccess } from "../utils/responses.js";
-import {
-  ALREADYEXISTS,
-  BADREQUEST,
-  CREATED,
-  FORBIDDEN,
-  INTERNALERROR,
-  NOTALLOWED,
-  NOTFOUND,
-  OK,
-} from "../constants/httpStatus.js";
-import { responseMessages } from "../constants/responseMessages.js";
+import { INTERNALERROR, NOTFOUND, OK } from "../constants/httpStatus.js";
 import pkg from "jsonwebtoken";
-import mongoose from "mongoose";
 import Teacher from "../models/Teacher.js";
 import Slot from "../models/Slot.js";
 import Batch from "../models/Batch.js";

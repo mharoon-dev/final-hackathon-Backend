@@ -1,5 +1,11 @@
 import express from "express";
-import { add, deleteBatch, getBatch, getBatches, update } from "../controller/batchController.js";
+import {
+  add,
+  deleteBatch,
+  getBatch,
+  getBatches,
+  update,
+} from "../controller/batchController.js";
 
 export const batchRoutes = express.Router();
 
@@ -23,7 +29,7 @@ batchRoutes.delete("/delete/:id", deleteBatch);
 // Public
 batchRoutes.get("/", getBatches);
 
-// get single batch 
+// get single batch
 // delete http://localhost:9000/api/batch/:id
 // Public
 batchRoutes.get("/:id", getBatch);

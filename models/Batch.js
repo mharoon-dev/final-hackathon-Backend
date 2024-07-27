@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 
 const batchSchema = new mongoose.Schema(
   {
-    SirName: {
-      type: String,
-      required: true,
-    },
     CourseName: {
       type: String,
       required: true,

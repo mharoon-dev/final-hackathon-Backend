@@ -18,10 +18,10 @@ const { verify, decode, sign } = pkg;
 export const add = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
-  const { courseName, batchNumber, startedFrom, endDate, sirname } = req.body;
+  const { courseName, batchNumber, startedFrom, endDate } = req.body;
 
   try {
-    if (!courseName || !batchNumber || !startedFrom || !endDate || !sirname) {
+    if (!courseName || !batchNumber || !startedFrom || !endDate) {
       return res
         .status(BADREQUEST)
         .send(
@@ -30,6 +30,7 @@ export const add = async (req, res) => {
       // .send("Missing Fields");
     } else {
       // check the course is exists
+      
       const checkCourse = await Course.findOne({ CourseName: courseName });
       if (!checkCourse) {
         return res.status(NOTFOUND).send(
@@ -58,7 +59,6 @@ export const add = async (req, res) => {
           BatchNumber: batchNumber && batchNumber,
           StartedFrom: new Date(startedFrom && startedFrom),
           EndDate: new Date(endDate && endDate),
-          SirName: sirname && sirname,
         });
         const data = await newBatch.save();
 

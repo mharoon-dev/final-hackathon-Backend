@@ -25,8 +25,7 @@ export const add = async (req, res) => {
     phoneNumber,
     courseName,
     batchNumber,
-    slotId,
-    rollNumber,
+    slotId
   } = req.body;
 
   try {
@@ -38,8 +37,7 @@ export const add = async (req, res) => {
       !phoneNumber ||
       !courseName ||
       !batchNumber ||
-      !slotId ||
-      !rollNumber
+      !slotId 
     ) {
       return res
         .status(BADREQUEST)
@@ -150,6 +148,7 @@ export const add = async (req, res) => {
     }
 
     // Create new student object
+    const random = Math.floor(1000 + Math.random() * 9000);
     const obj = {
       FullName: fullName,
       Email: email,
@@ -158,8 +157,8 @@ export const add = async (req, res) => {
       CourseName: courseName,
       BatchNumber: batchNumber,
       SlotId: slotId,
-      RollNumber: rollNumber,
-    };
+      RollNumber: random,
+    }
     console.log(obj);
     const student = new Student(obj);
     const data = await student.save();
@@ -189,16 +188,14 @@ export const add = async (req, res) => {
 };
 export const update = async (req, res) => {
   const { id } = req.params;
-  console.log(req.body);
-  const {
+  const  {
     fullName,
     email,
     fatherEmail,
     phoneNumber,
     courseName,
     batchNumber,
-    slotId,
-    rollNumber,
+    slotId
   } = req.body;
 
   try {

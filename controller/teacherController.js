@@ -20,6 +20,7 @@ export const add = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
   const { teacherName, email, phoneNumber, teacherOf, teacherId } = req.body;
+  
 
   try {
     if (!teacherName || !email || !phoneNumber || !teacherOf || !teacherId) {

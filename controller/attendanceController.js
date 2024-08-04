@@ -17,7 +17,9 @@ export const markAttendance = async (req, res) => {
       return res.status(404).json({ message: "Student not found" });
     }
 
-    const slot = await Slot.findById(student.SlotId);
+    const slot = await Slot.findOne({
+      SlotId: student.SlotId,
+    });
     if (!slot) {
       return res.status(404).json({ message: "Slot not found" });
     }
@@ -81,7 +83,7 @@ export const markAttendance = async (req, res) => {
     // Save the attendance record
     const attendance = new Attendance({
       RollNumber: student.RollNumber,
-      SlotId: slot._id,
+      SlotId: slot.SlotId,
       Date: new Date(),
       Status: "present",
     });

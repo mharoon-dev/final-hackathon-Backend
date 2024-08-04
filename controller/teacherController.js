@@ -305,3 +305,37 @@ export const getTeacher = async (req, res) => {
     );
   }
 };
+
+export const queryTeachers = async (req, res) => {
+  try {
+    console.log(req.query + "=====>> req.query");
+    const query = {};
+
+    if (req.query.teacherName) query.TeacherName = req.query.teacherName;
+    if (req.query.email) query.Email = req.query.email;
+    if (req.query.phoneNumber) query.PhoneNumber = req.query.phoneNumber;
+    if (req.query.teacherOf) query.TeacherOf = req.query.teacherOf;
+    if (req.query.teacherId) query.TeacherId = Number(req.query.teacherId);
+
+    const teachers = await Teacher.find(query);
+
+    if (teachers.length === 0) {
+      return res.status(404).send({
+        status: false,
+        message: "No teachers found with the given criteria",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Teachers fetched successfully",
+      data: teachers,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      status: false,
+      message: error.message,
+    });
+  }
+};

@@ -4,6 +4,7 @@ import {
   deleteTeacher,
   getTeacher,
   getTeachers,
+  queryTeachers,
   update,
 } from "../controller/teacherController.js";
 
@@ -33,3 +34,8 @@ teacherRoutes.get("/", getTeachers);
 // delete http://localhost:9000/api/teacher/:id
 // Public
 teacherRoutes.get("/:id", getTeacher);
+
+// get by query
+// delete http://localhost:9000/api/teacher/query
+// Public
+teacherRoutes.get("/query", queryTeachers);

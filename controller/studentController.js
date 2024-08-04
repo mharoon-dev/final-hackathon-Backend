@@ -25,7 +25,8 @@ export const add = async (req, res) => {
     phoneNumber,
     courseName,
     batchNumber,
-    slotId
+    slotId,
+    rollNumber,
   } = req.body;
 
   try {
@@ -37,7 +38,8 @@ export const add = async (req, res) => {
       !phoneNumber ||
       !courseName ||
       !batchNumber ||
-      !slotId 
+      !slotId ||
+      !rollNumber
     ) {
       return res
         .status(BADREQUEST)
@@ -119,7 +121,7 @@ export const add = async (req, res) => {
     }
 
     // Validate slot existence and course match
-    const checkSlot = await Slot.findOne({ _id: slotId });
+    const checkSlot = await Slot.findOne({ SlotId: slotId });
     if (!checkSlot) {
       return res
         .status(BADREQUEST)
@@ -148,7 +150,6 @@ export const add = async (req, res) => {
     }
 
     // Create new student object
-    const random = Math.floor(1000 + Math.random() * 9000);
     const obj = {
       FullName: fullName,
       Email: email,
@@ -157,15 +158,15 @@ export const add = async (req, res) => {
       CourseName: courseName,
       BatchNumber: batchNumber,
       SlotId: slotId,
-      RollNumber: random,
-    }
+      RollNumber: rollNumber,
+    };
     console.log(obj);
     const student = new Student(obj);
     const data = await student.save();
 
     // Update slot's StudentsId array
-    await Slot.findByIdAndUpdate(
-      slotId,
+    await Slot.findOneAndUpdate(
+      { SlotId: slotId },
       { $push: { StudentsId: data._id } },
       { new: true }
     );
@@ -188,18 +189,19 @@ export const add = async (req, res) => {
 };
 export const update = async (req, res) => {
   const { id } = req.params;
-  const  {
+  const {
     fullName,
     email,
     fatherEmail,
     phoneNumber,
     courseName,
     batchNumber,
-    slotId
+    slotId,
+    rollNumber,
   } = req.body;
 
   try {
-    const checkId = await Student.findOne({ _id: id });
+    const checkId = await Student.findById(id);
     if (!checkId) {
       return res.status(BADREQUEST).send(
         sendError({
@@ -283,7 +285,6 @@ export const update = async (req, res) => {
         BatchNumber: batchNumber || checkId.BatchNumber,
         CourseName: courseName || checkId.CourseName,
       });
-      console.log(checkBatch + "=====>>> checkBatch");
       if (!checkBatch) {
         return res.status(BADREQUEST).send(
           sendError({
@@ -311,7 +312,7 @@ export const update = async (req, res) => {
     let oldSlotId = checkId.SlotId;
     // check if slot is valid
     if (slotId) {
-      const checkSlot = await Slot.findById(slotId);
+      const checkSlot = await Slot.findOne({ SlotId: slotId });
       if (!checkSlot) {
         return res.status(BADREQUEST).send(
           sendError({
@@ -340,7 +341,7 @@ export const update = async (req, res) => {
 
     if (batchNumber || courseName) {
       // check the slot if the slot is for this course or batch
-      const slot = await Slot.findById(checkId.SlotId);
+      const slot = await Slot.findOne({ SlotId: checkId.SlotId });
       if (slot) {
         const checkCourseName = slot.CourseName;
         const checkBatchNumber = slot.BatchNumber;
@@ -358,26 +359,35 @@ export const update = async (req, res) => {
       }
     }
 
+    if (rollNumber) {
+      checkId.RollNumber = rollNumber;
+    }
+
     // Update the student
-    const updatedStudent = await Student.findByIdAndUpdate(id, checkId, {
-      new: true,
-    });
+    const updatedStudent = await Student.findOneAndUpdate(
+      { _id: id },
+      { $set: checkId },
+      { new: true }
+    );
 
     // Update the slot's StudentsId array if slotId has changed
     if (slotId) {
-      const slot = await Slot.findById(slotId);
+      const slot = await Slot.findOne({ SlotId: slotId });
       if (slot) {
         const updated = [...slot.StudentsId, updatedStudent._id];
-        await Slot.updateOne({ _id: slotId }, { StudentsId: updated });
+        await Slot.updateOne({ SlotId: slotId }, { StudentsId: updated });
 
         // Remove the student from the old slot's StudentsId array
-        const oldSlot = await Slot.findById(oldSlotId);
+        const oldSlot = await Slot.findOne({ SlotId: oldSlotId });
         if (oldSlot) {
           const oldUpdated = oldSlot.StudentsId.filter(
             (studentId) =>
               studentId.toString() !== updatedStudent._id.toString()
           );
-          await Slot.updateOne({ _id: oldSlotId }, { StudentsId: oldUpdated });
+          await Slot.updateOne(
+            { SlotId: oldSlotId },
+            { StudentsId: oldUpdated }
+          );
         }
       }
     }
@@ -413,7 +423,7 @@ export const deleteStudent = async (req, res) => {
       const deleted = await Student.findByIdAndDelete(req.params.id);
 
       // update the slot student array
-      const slot = await Slot.findOne({ _id: student.SlotId });
+      const slot = await Slot.findOne({ SlotId: student.SlotId });
       if (slot) {
         const updated = slot.StudentsId.filter(
           (studentId) => studentId.toString() !== deleted._id.toString()

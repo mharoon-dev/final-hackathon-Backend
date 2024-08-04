@@ -32,6 +32,10 @@ const slotSchema = new mongoose.Schema(
         ],
       },
     ],
+    SlotId: {
+      type: Number,
+      required: true,
+    },
     TeacherId: {
       type: Number,
       required: true,

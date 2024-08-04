@@ -27,6 +27,9 @@ export const signUp = async (req, res) => {
   try {
     const { role, email, password } = req.body;
 
+    // change the role in to lowercase
+    role = role.toLowerCase();
+
     if (!email || !password || !role) {
       return res
         .status(BADREQUEST) //BADREQUEST

@@ -41,7 +41,6 @@ const student = mongoose.Schema(
     SlotId: {
       type: String, // or String, depending on your data
       required: true,
-      unique: true,
     },
     PresentDays: {
       type: Number,
@@ -60,6 +59,7 @@ const student = mongoose.Schema(
       unique: true,
     },
   },
+
   {
     timestamps: true,
   }

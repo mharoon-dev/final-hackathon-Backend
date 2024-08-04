@@ -30,7 +30,7 @@ export const add = async (req, res) => {
       // .send("Missing Fields");
     } else {
       // check the course is exists
-      
+
       const checkCourse = await Course.findOne({ CourseName: courseName });
       if (!checkCourse) {
         return res.status(NOTFOUND).send(

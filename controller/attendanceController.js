@@ -2,6 +2,8 @@ import Student from "../models/Student.js";
 import Slot from "../models/Slot.js";
 import Batch from "../models/Batch.js";
 import Attendance from "../models/Attendance.js";
+import moment from "moment";
+
 // mark attendance
 export const markAttendance = async (req, res) => {
   try {
@@ -182,5 +184,48 @@ export const markAbsentStudents = async (req, res) => {
       message: "Error marking absent students",
       error: error.message,
     });
+  }
+};
+
+export const viewAttendance = async (req, res) => {
+  try {
+    // Get slotId from query
+    const { slotId } = req.query;
+
+    let slot;
+
+    if (slotId) {
+      // If slotId is provided, find the slot by SlotId
+      slot = await Slot.findOne({ SlotId: slotId });
+      if (!slot) {
+        return res.status(404).json({ message: "Slot not found" });
+      }
+    } else {
+      // Get current day and time
+      const currentDay = moment().format("dddd"); // e.g., "Monday"
+      const currentTime = moment().format("HH:mm"); // e.g., "14:30"
+
+      // Find the slot based on current day and time
+      slot = await Slot.findOne({
+        Days: currentDay,
+        StartTime: { $lte: currentTime },
+        EndTime: { $gte: currentTime },
+      });
+
+      if (!slot) {
+        return res.status(404).json({ message: "No ongoing slots found" });
+      }
+    }
+
+    // Find the attendance records for the found slot
+    const attendanceRecords = await Attendance.find({
+      SlotId: slot.SlotId,
+      Date: moment().startOf("day").toDate(), // Only today's date
+    });
+
+    res.status(200).json({ attendance: attendanceRecords });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
   }
 };

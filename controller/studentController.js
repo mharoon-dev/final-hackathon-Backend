@@ -27,6 +27,7 @@ export const add = async (req, res) => {
     batchNumber,
     slotId,
     rollNumber,
+    profilePicture,
   } = req.body;
 
   try {
@@ -38,7 +39,8 @@ export const add = async (req, res) => {
       !courseName ||
       !batchNumber ||
       !slotId ||
-      !rollNumber
+      !rollNumber ||
+      !profilePicture
     ) {
       return res
         .status(BADREQUEST)
@@ -60,14 +62,12 @@ export const add = async (req, res) => {
       FatherEmail: fatherEmail,
     });
     if (checkFatherEmail) {
-      return res
-        .status(ALREADYEXISTS)
-        .send(
-          sendError({
-            status: false,
-            message: responseMessages.FATHER_EMAIL_EXISTS,
-          })
-        );
+      return res.status(ALREADYEXISTS).send(
+        sendError({
+          status: false,
+          message: responseMessages.FATHER_EMAIL_EXISTS,
+        })
+      );
     }
 
     const checkCourse = await Course.findOne({ CourseName: courseName });
@@ -122,14 +122,12 @@ export const add = async (req, res) => {
 
     const checkRollNumber = await Student.findOne({ RollNumber: rollNumber });
     if (checkRollNumber) {
-      return res
-        .status(BADREQUEST)
-        .send(
-          sendError({
-            status: false,
-            message: responseMessages.ROLL_NUMBER_EXISTS,
-          })
-        );
+      return res.status(BADREQUEST).send(
+        sendError({
+          status: false,
+          message: responseMessages.ROLL_NUMBER_EXISTS,
+        })
+      );
     }
 
     const student = new Student({
@@ -141,6 +139,7 @@ export const add = async (req, res) => {
       BatchNumber: batchNumber,
       SlotId: slotId,
       RollNumber: rollNumber,
+      ProfilePicture: profilePicture,
     });
 
     const data = await student.save();
@@ -178,6 +177,7 @@ export const update = async (req, res) => {
     batchNumber,
     slotId,
     rollNumber,
+    profilePicture,
   } = req.body;
 
   try {
@@ -189,6 +189,11 @@ export const update = async (req, res) => {
           message: responseMessages.INVALID_ID,
         })
       );
+    }
+
+    // image update
+    if (profilePicture) {
+      student.ProfilePicture = profilePicture;
     }
 
     if (email) {
@@ -213,14 +218,12 @@ export const update = async (req, res) => {
         _id: { $ne: id },
       });
       if (checkFatherEmail) {
-        return res
-          .status(ALREADYEXISTS)
-          .send(
-            sendError({
-              status: false,
-              message: responseMessages.FATHER_EMAIL_EXISTS,
-            })
-          );
+        return res.status(ALREADYEXISTS).send(
+          sendError({
+            status: false,
+            message: responseMessages.FATHER_EMAIL_EXISTS,
+          })
+        );
       } else {
         student.FatherEmail = fatherEmail;
       }
@@ -245,14 +248,12 @@ export const update = async (req, res) => {
     if (courseName) {
       const checkCourse = await Course.findOne({ CourseName: courseName });
       if (!checkCourse) {
-        return res
-          .status(BADREQUEST)
-          .send(
-            sendError({
-              status: false,
-              message: responseMessages.INVALID_COURSE,
-            })
-          );
+        return res.status(BADREQUEST).send(
+          sendError({
+            status: false,
+            message: responseMessages.INVALID_COURSE,
+          })
+        );
       } else {
         student.CourseName = courseName;
       }
@@ -264,25 +265,21 @@ export const update = async (req, res) => {
         CourseName: courseName || student.CourseName,
       });
       if (!checkBatch) {
-        return res
-          .status(BADREQUEST)
-          .send(
-            sendError({
-              status: false,
-              message: responseMessages.INVALID_BATCH,
-            })
-          );
+        return res.status(BADREQUEST).send(
+          sendError({
+            status: false,
+            message: responseMessages.INVALID_BATCH,
+          })
+        );
       } else {
         const checkExpiry = new Date(checkBatch.Expiry);
         if (checkExpiry < new Date()) {
-          return res
-            .status(BADREQUEST)
-            .send(
-              sendError({
-                status: false,
-                message: responseMessages.EXPIRED_BATCH,
-              })
-            );
+          return res.status(BADREQUEST).send(
+            sendError({
+              status: false,
+              message: responseMessages.EXPIRED_BATCH,
+            })
+          );
         }
 
         student.BatchNumber = batchNumber || student.BatchNumber;
@@ -310,14 +307,12 @@ export const update = async (req, res) => {
         _id: { $ne: id },
       });
       if (checkRollNumber) {
-        return res
-          .status(BADREQUEST)
-          .send(
-            sendError({
-              status: false,
-              message: responseMessages.ROLL_NUMBER_EXISTS,
-            })
-          );
+        return res.status(BADREQUEST).send(
+          sendError({
+            status: false,
+            message: responseMessages.ROLL_NUMBER_EXISTS,
+          })
+        );
       } else {
         student.RollNumber = rollNumber;
       }

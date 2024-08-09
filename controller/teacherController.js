@@ -19,10 +19,20 @@ const { verify, decode, sign } = pkg;
 export const add = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
-  const { teacherName, email, phoneNumber, teacherOf, teacherId } = req.body;
+  const {
+    teacherName,
+    email,
+    phoneNumber,
+    teacherOf,
+    teacherId,
+    profilePicture,
+  } = req.body;
 
   try {
-    if (!teacherName || !email || !phoneNumber || !teacherOf || !teacherId) {
+    if (
+      (!teacherName || !email || !phoneNumber || !teacherOf || !teacherId,
+      !profilePicture)
+    ) {
       return res
         .status(BADREQUEST)
         .send(
@@ -77,6 +87,7 @@ export const add = async (req, res) => {
         PhoneNumber: phoneNumber,
         TeacherOf: teacherOf,
         TeacherId: teacherId,
+        ProfilePicture: profilePicture,
       };
 
       const teacher = new Teacher(obj);
@@ -113,7 +124,14 @@ export const update = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
   const { id } = req.params;
-  const { teacherName, email, phoneNumber, teacherOf, teacherId } = req.body;
+  const {
+    teacherName,
+    email,
+    phoneNumber,
+    teacherOf,
+    teacherId,
+    profilePicture,
+  } = req.body;
 
   try {
     // get the teacher
@@ -128,7 +146,10 @@ export const update = async (req, res) => {
     }
 
     // check the email
-    const checkEmail = await Teacher.findOne({ Email: req.body.email });
+    const checkEmail = await Teacher.findOne({
+      Email: req.body.email,
+      _id: { $ne: id },
+    });
     if (checkEmail) {
       return res
         .status(ALREADYEXISTS)
@@ -139,6 +160,7 @@ export const update = async (req, res) => {
 
     const checkPhoneNumber = await Teacher.findOne({
       PhoneNumber: req.body.phoneNumber,
+      _id: { $ne: id },
     });
     if (checkPhoneNumber) {
       return res
@@ -148,12 +170,10 @@ export const update = async (req, res) => {
         );
     }
 
-    const checkTeacherId = await Teacher.findOne(
-      {
-        TeacherId: req.body.teacherId,
-      },
-      { _id: { $ne: id } }
-    );
+    const checkTeacherId = await Teacher.findOne({
+      TeacherId: req.body.teacherId,
+      _id: { $ne: id },
+    });
     if (checkTeacherId) {
       return res.status(ALREADYEXISTS).send(
         sendError({
@@ -180,25 +200,30 @@ export const update = async (req, res) => {
       PhoneNumber: phoneNumber && phoneNumber,
       TeacherOf: teacherOf && teacherOf,
       TeacherId: teacherId && teacherId,
+      ProfilePicture: profilePicture && profilePicture,
     };
 
-    const updated = await Teacher.findByIdAndUpdate(
-      { _id: req.params.id },
-      data,
-      { new: true }
-    );
+    const updated = await Teacher.findByIdAndUpdate(id, data, { new: true });
 
     if (teacherOf) {
       const updateCourse = await Course.updateMany(
         { CourseName: teacherOf },
-        { $push: { Teachers: req.params.id } }
+        { $push: { Teachers: id } }
       );
 
       const oldCourse = await Course.updateMany(
         { CourseName: teacher.TeacherOf },
-        { $pull: { Teachers: req.params.id } }
+        { $pull: { Teachers: id } }
       );
     }
+
+    // teacher id update in the slots
+    console.log(teacher.TeacherId, "===>>> teacherId");
+    const updateSlot = await Slot.updateMany(
+      { TeacherId: teacher.TeacherId },
+      { $set: { TeacherId: teacherId } }
+    );
+    console.log(updateSlot, "===>>> updateSlot Result");
 
     res.status(OK);
     res.json({

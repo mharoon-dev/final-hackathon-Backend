@@ -148,9 +148,12 @@ export const update = async (req, res) => {
         );
     }
 
-    const checkTeacherId = await Teacher.findOne({
-      TeacherId: req.body.teacherId,
-    });
+    const checkTeacherId = await Teacher.findOne(
+      {
+        TeacherId: req.body.teacherId,
+      },
+      { _id: { $ne: id } }
+    );
     if (checkTeacherId) {
       return res.status(ALREADYEXISTS).send(
         sendError({

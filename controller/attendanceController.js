@@ -189,10 +189,11 @@ export const markAbsentStudents = async (req, res) => {
 
 export const viewAttendance = async (req, res) => {
   try {
-    // Get slotId from query
-    const { slotId } = req.query;
+    // Get slotId and date from the query
+    const { slotId, date } = req.query;
 
     let slot;
+    let attendanceRecords;
 
     if (slotId) {
       // If slotId is provided, find the slot by SlotId
@@ -200,8 +201,19 @@ export const viewAttendance = async (req, res) => {
       if (!slot) {
         return res.status(404).json({ message: "Slot not found" });
       }
+
+      // Find attendance by slotId and date if date is provided
+      const query = { SlotId: slot.SlotId };
+      if (date) {
+        query.createdAt = {
+          $gte: moment(date).startOf("day").toDate(),
+          $lt: moment(date).endOf("day").toDate(),
+        };
+      }
+
+      attendanceRecords = await Attendance.find(query);
     } else {
-      // Get current day and time
+      // Get current day and time if no slotId is provided
       const currentDay = moment().format("dddd"); // e.g., "Monday"
       const currentTime = moment().format("HH:mm"); // e.g., "14:30"
 
@@ -215,15 +227,29 @@ export const viewAttendance = async (req, res) => {
       if (!slot) {
         return res.status(404).json({ message: "No ongoing slots found" });
       }
+
+      // Find attendance by current slot and current date
+      const query = { SlotId: slot.SlotId };
+      query.createdAt = {
+        $gte: moment().startOf("day").toDate(),
+        $lt: moment().endOf("day").toDate(),
+      };
+
+      attendanceRecords = await Attendance.find(query);
     }
 
-    // Find the attendance records for the found slot
-    const attendanceRecords = await Attendance.find({
-      SlotId: slot.SlotId,
-      Date: moment().startOf("day").toDate(), // Only today's date
-    });
+    // If no attendance records are found, return a 404
+    if (attendanceRecords.length === 0) {
+      return res.status(404).json({ message: "No attendance records found" });
+    }
 
-    res.status(200).json({ attendance: attendanceRecords });
+    // Include slot data with each attendance record
+    const attendanceWithSlotData = attendanceRecords?.map((record) => ({
+      ...record?.toObject(),
+      slotDetails: slot,
+    }));
+
+    res.status(200).json({ attendance: attendanceWithSlotData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });

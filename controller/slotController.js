@@ -195,13 +195,29 @@ export const deleteSlot = async (req, res) => {
 
 export const getSlots = async (req, res) => {
   try {
-    const batches = await Slot.find();
-    res.status(OK);
-    res.json({
-      status: true,
-      message: "Batches fetched successfully",
-      data: batches,
-    });
+    // get batchnumber from query
+    const { batchnumber, coursename } = req.query;
+    console.log(batchnumber, coursename);
+    if (batchnumber && coursename) {
+      const slots = await Slot.find({
+        BatchNumber: batchnumber,
+        CourseName: coursename,
+      });
+      res.status(OK);
+      res.json({
+        status: true,
+        message: "Slots fetched successfully",
+        data: slots,
+      });
+    } else {
+      const slots = await Slot.find();
+      res.status(OK);
+      res.json({
+        status: true,
+        message: "slots fetched successfully",
+        data: slots,
+      });
+    }
   } catch (error) {
     console.log(error);
     return res.status(INTERNALERROR).send(

@@ -12,9 +12,9 @@ const attendanceRoutes = express.Router();
 attendanceRoutes.post("/markattendance", markAttendance);
 
 // View Attendance
-// GET http://localhost:9000/api/attendance/attendance
+// GET http://localhost:9000/api/attendance/view
 // Public
-attendanceRoutes.get("/attendance", viewAttendance);
+attendanceRoutes.get("/view", viewAttendance);
 
 // mark absent
 // post http://localhost:9000/api/attendance/markabsent

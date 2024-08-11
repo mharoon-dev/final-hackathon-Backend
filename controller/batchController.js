@@ -200,13 +200,25 @@ export const deleteBatch = async (req, res) => {
 
 export const getBatches = async (req, res) => {
   try {
-    const batches = await Batch.find();
-    res.status(OK);
-    res.json({
-      status: true,
-      message: "Batches fetched successfully",
-      data: batches,
-    });
+    const { coursename } = req.query;
+
+    if (coursename) {
+      const batches = await Batch.find({ CourseName: coursename });
+      res.status(OK);
+      res.json({
+        status: true,
+        message: "Batches fetched successfully",
+        data: batches,
+      });
+    } else {
+      const batches = await Batch.find();
+      res.status(OK);
+      res.json({
+        status: true,
+        message: "Batches fetched successfully",
+        data: batches,
+      });
+    }
   } catch (error) {
     console.log(error);
     return res.status(INTERNALERROR).send(

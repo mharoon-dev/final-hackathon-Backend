@@ -25,12 +25,10 @@ export const signUp = async (req, res) => {
   console.log(req.body, "===>>> req.body");
 
   try {
-    const { role, email, password } = req.body;
+    const { email, password } = req.body;
 
-    // change the role in to lowercase
-    role = role.toLowerCase();
 
-    if (!email || !password || !role) {
+    if (!email || !password) {
       return res
         .status(BADREQUEST) //BADREQUEST
         .send(
@@ -49,29 +47,29 @@ export const signUp = async (req, res) => {
           sendError({ status: false, message: responseMessages.EMAIL_EXISTS })
         );
     } else {
-      if (role === "student") {
-        const checkStudentExists = await Student.findOne({
-          Email: email,
-        });
-        if (!checkStudentExists) {
-          return res
-            .status(NOTFOUND)
-            .send(
-              sendError({ status: false, message: responseMessages.NO_STUDENT })
-            );
-        }
-      } else if (role === "teacher") {
-        const checkTeacherExists = await Teacher.findOne({
-          Email: email,
-        });
-        if (!checkTeacherExists) {
-          return res
-            .status(NOTFOUND)
-            .send(
-              sendError({ status: false, message: responseMessages.NO_TEACHER })
-            );
-        }
-      }
+      // if (role === "student") {
+      //   const checkStudentExists = await Student.findOne({
+      //     Email: email,
+      //   });
+      //   if (!checkStudentExists) {
+      //     return res
+      //       .status(NOTFOUND)
+      //       .send(
+      //         sendError({ status: false, message: responseMessages.NO_STUDENT })
+      //       );
+      //   }
+      // } else if (role === "teacher") {
+      //   const checkTeacherExists = await Teacher.findOne({
+      //     Email: email,
+      //   });
+      //   if (!checkTeacherExists) {
+      //     return res
+      //       .status(NOTFOUND)
+      //       .send(
+      //         sendError({ status: false, message: responseMessages.NO_TEACHER })
+      //       );
+      //   }
+      // }
 
       const salt = genSaltSync(10);
       let doc;
@@ -79,7 +77,6 @@ export const signUp = async (req, res) => {
       if (password?.length >= 7) {
         doc = new User({
           Email: email,
-          Role: role,
           Password: hashSync(password, salt),
         });
         //otp

@@ -3,6 +3,7 @@ import Slot from "../models/Slot.js";
 import Batch from "../models/Batch.js";
 import Attendance from "../models/Attendance.js";
 import moment from "moment";
+import Holiday from "../models/Holiday.js";
 
 // mark attendance
 export const markAttendance = async (req, res) => {
@@ -100,7 +101,7 @@ export const markAttendance = async (req, res) => {
 // mark absent students
 export const markAbsentStudents = async (req, res) => {
   try {
-    checkHoliday = await Holiday.findOne({ Date: new Date() });
+    let checkHoliday = await Holiday.findOne({ Date: new Date() });
     console.log(checkHoliday + "====>> checkHoliday");
     if (checkHoliday) {
       return res
@@ -134,7 +135,7 @@ export const markAbsentStudents = async (req, res) => {
     for (let slot of slots) {
       // Step 3: Retrieve students who are marked present for this slot
       const presentStudents = await Attendance.find({
-        SlotId: slot._id,
+        SlotId: slot.SlotId,
         Date: {
           $gte: startOfDay,
           $lt: endOfDay,

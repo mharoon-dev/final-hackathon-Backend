@@ -16,17 +16,13 @@ import { markAbsentStudents } from "./controller/attendanceController.js";
 const app = express();
 
 dotenv.config();
-// app.use(
-//   cors({
-//     origin: "*",
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//     credentials: true,
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   })
-// );
 
-// // mark absent at 12:55 pm daily
+// // mark absent at 11:55 pm daily
 cron.schedule("55 23 * * *", markAbsentStudents);
+
+// cron.schedule('* * * * * *', () => {
+//   console.log('48615');
+// }); // Runs every second
 
 connectDB();
 app.use(express.json());

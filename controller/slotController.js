@@ -5,7 +5,7 @@ import Teacher from "../models/Teacher.js";
 import Slot from "../models/Slot.js";
 import Batch from "../models/Batch.js";
 
-const { verify, decode, sign } = pkg;
+const { verify, decode, sign } = pkg;``
 
 export const add = async (req, res) => {
   const {
